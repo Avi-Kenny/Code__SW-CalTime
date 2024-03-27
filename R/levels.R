@@ -29,7 +29,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
     sigma = 1,
     tau = 1,
     true_model = list(
-      "IT" = list(delta_s=c(6,6,6), gamma_j=c(0,0,0,0)),
+      "IT" = list(delta_s=c(0,0,0), gamma_j=c(0,6,6,6)),
       "CTI" = list(delta_s=c(0,0,0), gamma_j=c(0,2,4,6))
     ),
     analysis_model = list(

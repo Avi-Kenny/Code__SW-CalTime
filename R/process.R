@@ -42,7 +42,9 @@ if (F) {
 
 # sim <- readRDS("SimEngine.out/estimation_1_20231112.rds")
 
-sim %>% SimEngine::summarize(
+summ <- sim %>% SimEngine::summarize(
   list(stat="mean", x="est"),
   list(stat="bias", estimate="est", truth="true_tate")
 )
+
+print(summ)
