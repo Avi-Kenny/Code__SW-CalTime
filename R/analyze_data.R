@@ -34,8 +34,10 @@ analyze_data <- function(dat, model, target) {
     if (target=="ETATE") {
       # Hard-coded for a 4x3 design
       s <- summary(model_obj)
-      ests <- as.numeric(s$coefficients[5:7, "Estimate"])
-      vcov <- vcov(model_obj)[5:7,5:7]
+      # ests <- as.numeric(s$coefficients[5:7, "Estimate"])
+      ests <- as.numeric(s$coefficients[grep('factor\\(s\\)',rownames(s$coefficients)), "Estimate"]) # KL attempt to generalize calling the treatment effects
+      # vcov <- vcov(model_obj)[5:7,5:7]
+      vcov <- vcov(model_obj)[grep('factor\\(s\\)',rownames(s$coefficients)),grep('factor\\(s\\)',rownames(s$coefficients))] # KL attempt to generalize calling the treatment effects
       results <- list(
         est = mean(ests),
         se = sqrt(sum(vcov))
@@ -66,8 +68,10 @@ analyze_data <- function(dat, model, target) {
     if (target=="CTATE") {
       # Hard-coded for a 4x3 design
       s <- summary(model_obj)
-      ests <- as.numeric(s$coefficients[5:6, "Estimate"])
-      vcov <- vcov(model_obj)[5:6,5:6]
+      # ests <- as.numeric(s$coefficients[5:6, "Estimate"])
+      ests <- as.numeric(s$coefficients[grep('factor\\(j2\\)',rownames(s$coefficients)), "Estimate"]) # KL attempt to generalize calling the treatment effects
+      # vcov <- vcov(model_obj)[5:6,5:6]
+      vcov <- vcov(model_obj)[grep('factor\\(j2\\)',rownames(s$coefficients)),grep('factor\\(j2\\)',rownames(s$coefficients))] # KL attempt to generalize calling the treatment effects
       results <- list(
         est = mean(ests),
         se = sqrt(sum(vcov))

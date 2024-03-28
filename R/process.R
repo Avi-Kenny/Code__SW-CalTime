@@ -43,6 +43,7 @@ if (F) {
 # sim <- readRDS("SimEngine.out/estimation_1_20231112.rds")
 
 summ <- sim %>% SimEngine::summarize(
+  list(stat="mean", x="true_tate"), # KL attempt (add true_tate from one_simulation)
   list(stat="mean", x="est"),
   list(stat="bias", estimate="est", truth="true_tate")
 )

@@ -5,7 +5,7 @@ cfg <- list(
   sim_which = "estimation",
   sim_level_set = "CTATE set 1",
   sim_run_or_update = "run",
-  sim_num = 100,
+  sim_num = 10,
   sim_parallel = F,
   sim_n_cores = 3,
   sim_stop_at_error = F
@@ -31,3 +31,4 @@ if (cfg$run_sims) { source("R/run.R", local=T) }
 
 # Tables and figures
 if (cfg$run_process) { source("R/process.R", local=T) }
+

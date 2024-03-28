@@ -15,13 +15,18 @@ if (cfg$sim_which=="estimation") {
       mu = 5,
       sigma = L$sigma,
       tau = L$tau,
-      beta_j = c(0,0,0,0),
+      # beta_j = c(0,0,0,0),
+      beta_j = rep(0, L$n_time_points), # KL attempt # generalize period effects
       delta_s = L$true_model$delta_s,
       gamma_j = L$true_model$gamma_j,
-      n_clusters = 24,
-      n_time_points = 4,
-      n_ind_per_cluster = 10,
-      n_extra_time_points = 0
+      # n_clusters = 24,
+      # n_time_points = 4,
+      # n_ind_per_cluster = 10,
+      # n_extra_time_points = 0
+      n_clusters = (L$n_time_points-1)*8, # KL attempt # generalize # of clusters
+      n_time_points = L$n_time_points, # KL attempt # set n_time_periods in levels.R
+      n_ind_per_cluster = L$n_ind_per_cluster, # KL attempt # set n_ind_per_cluster in levels.R
+      n_extra_time_points = L$n_extra_time_points # KL attempt # set n_extra_time_points in levels.$
     )
     
     # Analyze data
@@ -32,7 +37,8 @@ if (cfg$sim_which=="estimation") {
     if (L$estimand=="ETATE") {
       true_tate <- mean(L$true_model$delta_s)
     } else if (L$estimand=="CTATE") {
-      true_tate <- mean(L$true_model$gamma_j[2:3])
+      # true_tate <- mean(L$true_model$gamma_j[2:3])
+      true_tate <- mean(L$true_model$gamma_j[2:(length(L$true_model$gamma_j)-1)]) # KL attempt generalize true_tate code
     }
 
     # Return results
