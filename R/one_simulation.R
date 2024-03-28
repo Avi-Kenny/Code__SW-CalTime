@@ -16,7 +16,7 @@ if (cfg$sim_which=="estimation") {
       sigma = L$sigma,
       tau = L$tau,
       # beta_j = c(0,0,0,0),
-      beta_j = rep(0, L$n_time_points), # KL attempt # generalize period effects
+      beta_j = rep(0, L$n_time_points), # KL attempt # linear period effects
       delta_s = L$true_model$delta_s,
       gamma_j = L$true_model$gamma_j,
       # n_clusters = 24,
