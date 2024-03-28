@@ -6,7 +6,7 @@ cfg <- list(
   sim_level_set = "CTATE set 1",
   # sim_level_set = "ETATE set 1",
   sim_run_or_update = "run",
-  sim_num = 10,
+  sim_num = 2, # 10
   sim_parallel = F,
   sim_n_cores = 3,
   sim_stop_at_error = F

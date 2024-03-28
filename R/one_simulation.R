@@ -43,8 +43,10 @@ if (cfg$sim_which=="estimation") {
 
     # Return results
     return(list(
+      ICC = L$tau^2/(L$sigma^2+L$tau^2),
       est = results$est,
       se = results$se,
+      var = results$se^2,
       true_tate = true_tate
     ))
     
