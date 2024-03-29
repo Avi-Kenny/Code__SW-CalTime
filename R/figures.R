@@ -29,22 +29,39 @@ simresults.df$estimator <- ifelse(
   )
 )
 simresults.df$estimandlabel <- paste0("Estimand: ", simresults.df$estimand)
-simresults.df <- rbind(
+# df for reported results
+simresults.df2 <- rbind(
   simresults.df %>% mutate(simresult=bias_est_pct, simresultlabel="Percent Bias (%)"),
   simresults.df %>% mutate(simresult=precision, simresultlabel="Precision"),
   simresults.df %>% mutate(simresult=CP, simresultlabel="CP"),
   simresults.df %>% mutate(simresult=RMSE, simresultlabel="RMSE")
 )
-simresults.df$simresultlabel <- factor(simresults.df$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
-colnames(simresults.df)
+simresults.df2$simresultlabel <- factor(simresults.df2$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
+colnames(simresults.df2)
+
 # plot facet barplot
-ggplot(simresults.df, aes(x=estimator, y=simresult, color=estimator, fill=estimator)) +
+ggplot(simresults.df2, aes(x=estimator, y=simresult, color=estimator, fill=estimator)) +
   geom_bar(stat="identity") +
   facet_grid(simresultlabel~estimandlabel, scales = "free") +
   theme_bw() +
   labs(x ="Estimators", y = "Simulation Results") +
   theme(legend.position = "none")
 # width: 550, height: 500
+
+# plot appendix plot (Power & MCSE)
+ggplot(simresults.df, aes(x=estimator, y=Power, color=estimator, fill=estimator)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  facet_grid(~estimandlabel, scales = "free") +
+  labs(x ="Estimators", y = "Power") +
+  theme(legend.position = "none")
+ggplot(simresults.df, aes(x=estimator, y=monte_carlo_se, color=estimator, fill=estimator)) +
+  geom_bar(stat="identity") +
+  theme_bw() +
+  facet_grid(~estimandlabel, scales = "free") +
+  labs(x ="Estimators", y = "Monte Carlo SE") +
+  theme(legend.position = "none")
+# width 550, height=200
 
 
 # Lineplot of true effect curves
