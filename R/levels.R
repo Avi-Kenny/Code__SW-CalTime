@@ -53,7 +53,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
       # "CTI" = list(delta_s=c(0,0,0), gamma_j=c(0,2,4,6))
       
       # "IT" = list(delta_s=c(0,0,0,0,0,0,0,0,0), gamma_j=c(0,6,6,6,6,6,6,6,6,6)), # KL attempt
-      "CTI" = list(delta_s=c(0,0,0,0,0,0,0,0,0), gamma_j=c(0,6,3,1,0,0,0,0,0,0)) # KL attempt
+      "CTI" = list(delta_s=c(0,0,0,0,0,0,0,0,0), gamma_j=c(0,6,3,1,0.5,0.1,0,0,0,0)) # KL attempt
     ),
     analysis_model = list(
       "IT/ATE" = list(model="IT", target="ATE"),
