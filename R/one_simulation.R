@@ -23,7 +23,7 @@ if (cfg$sim_which=="estimation") {
       # n_time_points = 4,
       # n_ind_per_cluster = 10,
       # n_extra_time_points = 0
-      n_clusters = (L$n_time_points-1)*8, # KL attempt # generalize # of clusters
+      n_clusters = (L$n_time_points-1)*2, # KL attempt # generalize # of clusters
       n_time_points = L$n_time_points, # KL attempt # set n_time_periods in levels.R
       n_ind_per_cluster = L$n_ind_per_cluster, # KL attempt # set n_ind_per_cluster in levels.R
       n_extra_time_points = L$n_extra_time_points # KL attempt # set n_extra_time_points in levels.$
@@ -39,10 +39,13 @@ if (cfg$sim_which=="estimation") {
     } else if (L$estimand=="CTATE") {
       # true_tate <- mean(L$true_model$gamma_j[2:3])
       true_tate <- mean(L$true_model$gamma_j[2:(length(L$true_model$gamma_j)-1)]) # KL attempt generalize true_tate code
+    } else if (L$estimand=="IT"){
+      true_tate <- mean(L$true_model$delta_s)
     }
 
     # Return results
     return(list(
+      n_clusters = (L$n_time_points-1)*2,
       ICC = L$tau^2/(L$sigma^2+L$tau^2),
       est = results$est,
       se = results$se,

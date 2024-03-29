@@ -14,10 +14,11 @@ if (F) {
     beta_j = c(0,0,0,0),
     # delta_s = c(5,5,5),
     # gamma_j = c(0,0,0,0),
-    delta_s = c(2,20,200), # KL test with bigger ETE (looks good)
+    # delta_s = c(2,20,200), # KL test with bigger ETE (looks good)
     gamma_j = c(0,0,0,0), # KL test with bigger ETE (looks good)
     # delta_s = c(0,0,0), # KL test with CTE (looks good)
     # gamma_j = c(0,2,20,200), # KL test with CTE (looks good)
+    delta_s = c(6,6,6), # KL test with bigger ETE (looks good)
     n_clusters = 24,
     n_time_points = 4,
     n_ind_per_cluster = 10,
@@ -48,6 +49,7 @@ if (F) {
 # sim <- readRDS("SimEngine.out/estimation_1_20231112.rds")
 
 summ <- sim %>% SimEngine::summarize(
+  list(name="n_clusters", stat="mean", x="n_clusters"),
   list(name="ICC", stat="mean", x="ICC"),
   list(name="true_tate", stat="mean", x="true_tate"), # KL attempt (add true_tate from one_simulation)
   list(stat="mean", x="est"),
