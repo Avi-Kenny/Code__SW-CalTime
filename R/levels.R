@@ -21,7 +21,7 @@ if (cfg$run_sims && Sys.getenv("sim_run") %in% c("first", "")) {
       # "ETI" = list(delta_s=c(2,4,6), gamma_j=c(0,0,0,0))
       
       # "IT" = list(delta_s=c(6,6,6,6,6,6,6,6,6), gamma_j=c(0,0,0,0,0,0,0,0,0,0)), # KL attempt
-      "ETI" = list(delta_s=c(0,0,0,1,2,4,6,6,6), gamma_j=c(0,0,0,0,0,0,0,0,0,0)) # KL attempt
+      "ETI" = list(delta_s=c(0,0,0.5,1,2,4,6,6,6), gamma_j=c(0,0,0,0,0,0,0,0,0,0)) # KL attempt
       
     ),
     analysis_model = list(

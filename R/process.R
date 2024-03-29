@@ -75,4 +75,11 @@ summ$RMSE <- sqrt(summ$MSE)
 # correct Precision
 summ$precision <- 1/summ$mean_est_var
 
+# output summ
 print(summ)
+
+# save output dataset
+write.csv(x=summ, file=file.path(getwd(), "Output Results", 
+                                 paste0(sim$levels$estimand, "_dataset_", sim$config$num_sim,".csv")
+                                 ) 
+          )
