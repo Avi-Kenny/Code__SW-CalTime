@@ -30,8 +30,8 @@ if (cfg$sim_which=="estimation") {
     )
     
     # Analyze data
-    results <- analyze_data(dat=dat, model=L$analysis_model$model,
-                            target=L$analysis_model$target)
+    results_ME <- analyze_data_ME(dat=dat, model=L$analysis_model$model, target=L$analysis_model$target)
+    results_OLS <- analyze_data_OLS(dat=dat, model=L$analysis_model$model, target=L$analysis_model$target)
     
     # True value of ETATE or CTATE
     if (L$estimand=="ETATE") {
@@ -47,9 +47,19 @@ if (cfg$sim_which=="estimation") {
     return(list(
       n_clusters = (L$n_time_points-1)*2,
       ICC = L$tau^2/(L$sigma^2+L$tau^2),
-      est = results$est,
-      se = results$se,
-      var = results$se^2,
+      
+      est_ME = results_ME$est,
+      se_ME = results_ME$se,
+      var_ME = results_ME$se^2,
+      
+      est_OLS = results_OLS$est,
+      se_OLS = results_OLS$se,
+      se_OLS_CR2 = results_OLS$se_CR2,
+      se_OLS_CR3 = results_OLS$se_CR2,
+      var_OLS = results_OLS$se^2,
+      var_OLS_CR2 = results_OLS$se_CR2^2,
+      var_OLS_CR3 = results_OLS$se_CR3^2,
+      
       true_tate = true_tate
     ))
     

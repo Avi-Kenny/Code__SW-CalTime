@@ -3,6 +3,7 @@
 library(ggplot2)
 library(dplyr)
 library(cowplot)
+library(ggpattern)
 
 # import datasets
 ETATE.df <- read.csv(file.path(getwd(), "Output Results", "ETATE_dataset_1000.csv"))
@@ -15,7 +16,7 @@ IT.df <- read.csv(file.path(getwd(), "Output Results", "IT_dataset_1000.csv"))
 # (barplot fills) Analyses: IT, ETATE, CTATE
 # (y facet) bias_est_pct, precision, RMSE, CP, Power
 simresults.df <- rbind(ETATE.df, CTATE.df, IT.df)
-simresults.df$estimator <- ifelse(
+simresults.df$Estimator <- ifelse(
   simresults.df$analysis_model=="IT/ATE", 
   "IT",
   ifelse(
@@ -29,54 +30,108 @@ simresults.df$estimator <- ifelse(
   )
 )
 simresults.df$estimandlabel <- paste0("Estimand: ", simresults.df$estimand)
-# df for reported results
-simresults.df2 <- rbind(
-  simresults.df %>% mutate(simresult=bias_est_pct, simresultlabel="Percent Bias (%)"),
-  simresults.df %>% mutate(simresult=precision, simresultlabel="Precision"),
-  simresults.df %>% mutate(simresult=CP, simresultlabel="CP"),
-  simresults.df %>% mutate(simresult=RMSE, simresultlabel="RMSE")
+str(simresults.df)
+# df for reporting results
+# Simulated ME results
+simresults.df_ME <- rbind(
+  simresults.df %>% mutate(simresult=bias_est_ME_pct, simresultlabel="Percent Bias (%)"),
+  simresults.df %>% mutate(simresult=precision_ME, simresultlabel="Precision"),
+  simresults.df %>% mutate(simresult=CP_ME, simresultlabel="CP"),
+  simresults.df %>% mutate(simresult=RMSE_ME, simresultlabel="RMSE")
 )
-simresults.df2$simresultlabel <- factor(simresults.df2$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
-colnames(simresults.df2)
+simresults.df_ME$simresultlabel <- factor(simresults.df_ME$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
+colnames(simresults.df_ME)
+# Simulated OLS results
+simresults.df_OLS <- rbind(
+  simresults.df %>% mutate(simresult=bias_est_OLS_pct, simresultlabel="Percent Bias (%)"),
+  simresults.df %>% mutate(simresult=precision_OLS, simresultlabel="Precision"),
+  simresults.df %>% mutate(simresult=CP_OLS, simresultlabel="CP"),
+  simresults.df %>% mutate(simresult=RMSE_OLS, simresultlabel="RMSE")
+)
+simresults.df_OLS$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
 
-# plot facet barplot
-ggplot(simresults.df2, aes(x=estimator, y=simresult, color=estimator, fill=estimator)) +
+simresults.df2 <- rbind(
+  simresults.df_ME %>% mutate(corr = "Exchangeable"),
+  simresults.df_OLS %>% mutate(corr = "Independence")
+)
+# plot facet barplot with exchangeable exchangeable working correlation
+ggplot(simresults.df_ME, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
   geom_bar(stat="identity") +
   facet_grid(simresultlabel~estimandlabel, scales = "free") +
   theme_bw() +
-  labs(x ="Estimators", y = "Simulation Results") +
+  labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Simulation Results") +
   theme(legend.position = "none")
 # width: 550, height: 500
+# plot facet barplot with independence working correlation structure
+ggplot(simresults.df_OLS, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
+  geom_bar(stat="identity") +
+  facet_grid(simresultlabel~estimandlabel, scales = "free") +
+  theme_bw() +
+  labs(title="Analysis with an independence working correlation structure", x ="Estimators", y = "Simulation Results") +
+  theme(legend.position = "none")
+# width: 550, height: 500
+# plot both together
+ggplot(
+  simresults.df2, 
+  aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
+) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(x ="Working Correlation Structure", y = "Simulation Results") +
+  # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
+  # ) +
+  # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
+  # ggpattern::scale_pattern_manual(values = c(Exchangeable = "stripe", Independence = "none")) +
+  # labs(x ="Estimators", y = "Simulation Results") +
+  facet_grid(simresultlabel~estimandlabel, scales = "free") +
+  theme_bw() +
+  theme(legend.position = "bottom")
+# width: 650, height: 500
 
 # plot appendix plot (Power & MCSE)
-ggplot(simresults.df, aes(x=estimator, y=Power, color=estimator, fill=estimator)) +
+ggplot(simresults.df, aes(x=estimator, y=Power_ME, color=estimator, fill=estimator)) +
   geom_bar(stat="identity") +
   theme_bw() +
   facet_grid(~estimandlabel, scales = "free") +
-  labs(x ="Estimators", y = "Power") +
+  labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Power_ME") +
   theme(legend.position = "none")
-ggplot(simresults.df, aes(x=estimator, y=monte_carlo_se, color=estimator, fill=estimator)) +
+ggplot(simresults.df, aes(x=estimator, y=monte_carlo_se_ME, color=estimator, fill=estimator)) +
   geom_bar(stat="identity") +
   theme_bw() +
   facet_grid(~estimandlabel, scales = "free") +
-  labs(x ="Estimators", y = "Monte Carlo SE") +
+  labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Monte Carlo SE") +
   theme(legend.position = "none")
 # width 550, height=200
 
 
 # Lineplot of true effect curves
-ETE.df <- data.frame(
-  IT = filter(ETATE.df, analysis_model=="IT/ATE")$mean_est,
-  ETATE = filter(ETATE.df, analysis_model=="ETI/ETATE")$mean_est,
-  CTATE = filter(ETATE.df, analysis_model=="CTI/CTATE")$mean_est,
+ETE.df_ME <- data.frame(
+  IT = filter(ETATE.df, analysis_model=="IT/ATE")$mean_est_ME,
+  ETATE = filter(ETATE.df, analysis_model=="ETI/ETATE")$mean_est_ME,
+  CTATE = filter(ETATE.df, analysis_model=="CTI/CTATE")$mean_est_ME,
   effect_curve = c(0,0,0.5,1,2,4,6,6,6),
   time = c(1,2,3,4,5,6,7,8,9),
   time_effect = "ETE"
 )
-CTE.df <- data.frame(
-  IT = filter(CTATE.df, analysis_model=="IT/ATE")$mean_est,
-  ETATE = filter(CTATE.df, analysis_model=="ETI/ETATE")$mean_est,
-  CTATE = filter(CTATE.df, analysis_model=="CTI/CTATE")$mean_est,
+CTE.df_ME <- data.frame(
+  IT = filter(CTATE.df, analysis_model=="IT/ATE")$mean_est_ME,
+  ETATE = filter(CTATE.df, analysis_model=="ETI/ETATE")$mean_est_ME,
+  CTATE = filter(CTATE.df, analysis_model=="CTI/CTATE")$mean_est_ME,
+  effect_curve = c(6,3,1,0.5,0.1,0,0,0),
+  time = c(2,3,4,5,6,7,8,9),
+  time_effect = "CTE"
+)
+ETE.df_OLS <- data.frame(
+  IT = filter(ETATE.df, analysis_model=="IT/ATE")$mean_est_OLS,
+  ETATE = filter(ETATE.df, analysis_model=="ETI/ETATE")$mean_est_OLS,
+  CTATE = filter(ETATE.df, analysis_model=="CTI/CTATE")$mean_est_OLS,
+  effect_curve = c(0,0,0.5,1,2,4,6,6,6),
+  time = c(1,2,3,4,5,6,7,8,9),
+  time_effect = "ETE"
+)
+CTE.df_OLS <- data.frame(
+  IT = filter(CTATE.df, analysis_model=="IT/ATE")$mean_est_OLS,
+  ETATE = filter(CTATE.df, analysis_model=="ETI/ETATE")$mean_est_OLS,
+  CTATE = filter(CTATE.df, analysis_model=="CTI/CTATE")$mean_est_OLS,
   effect_curve = c(6,3,1,0.5,0.1,0,0,0),
   time = c(2,3,4,5,6,7,8,9),
   time_effect = "CTE"
@@ -84,7 +139,7 @@ CTE.df <- data.frame(
 # set plot colors
 colors <- c("ETATE" = "#00BA38", "CTATE" = "#F8766D", "IT" = "#619CFF")
 # plots
-ETEplot <-  ggplot(ETE.df, aes(x=factor(time), y=effect_curve, group=1)) + 
+ETEplot_ME <-  ggplot(ETE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkgreen", color="darkgreen") +
   geom_line(color="darkgreen") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
@@ -93,8 +148,9 @@ ETEplot <-  ggplot(ETE.df, aes(x=factor(time), y=effect_curve, group=1)) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
   scale_color_manual(values = colors) +
   theme_bw() +
-  labs(title="Simulated exposure time-varying effects", x ="Exposure time (s)", y = "ETE")
-CTEplot <- ggplot(CTE.df, aes(x=factor(time), y=effect_curve, group=1)) + 
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title="Exchangeable", x ="Exposure time (s)", y = "ETE")
+CTEplot_ME <- ggplot(CTE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkred", color="darkred") +
   geom_line(color="darkred") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
@@ -103,16 +159,48 @@ CTEplot <- ggplot(CTE.df, aes(x=factor(time), y=effect_curve, group=1)) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
   scale_color_manual(values = colors) +
   theme_bw() +
-  labs(title="Simulated calendar time-varying effects", x ="Calendar time (j)", y = "CTE")
+  labs(x ="Calendar time (j)", y = "CTE")
+ETEplot_OLS <-  ggplot(ETE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
+  geom_point(fill="darkgreen", color="darkgreen") +
+  geom_line(color="darkgreen") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_line(aes(y = IT, color = "IT")) +
+  geom_line(aes(y = ETATE, color = "ETATE")) +
+  geom_line(aes(y = CTATE, color = "CTATE")) +
+  scale_color_manual(values = colors) +
+  theme_bw() +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  labs(title="Independence", x ="Exposure time (s)", y = NULL)
+CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
+  geom_point(fill="darkred", color="darkred") +
+  geom_line(color="darkred") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_line(aes(y = IT, color = "IT")) +
+  geom_line(aes(y = ETATE, color = "ETATE")) +
+  geom_line(aes(y = CTATE, color = "CTATE")) +
+  scale_color_manual(values = colors) +
+  theme_bw() +
+  labs(x ="Calendar time (j)", y = NULL)
 # cowplot altogether:
 cowplot::plot_grid(
   cowplot::plot_grid(
-    ETEplot+theme(legend.position = "none"),
-    CTEplot+theme(legend.position = "none"),
-    nrow=1
+    cowplot::plot_grid(
+      ETEplot_ME+theme(legend.position = "none"),
+      CTEplot_ME+theme(legend.position = "none"),
+      nrow=2,
+      rel_heights=c(1,0.9)
+    ),
+    cowplot::plot_grid(
+      ETEplot_OLS+theme(legend.position = "none"),
+      CTEplot_OLS+theme(legend.position = "none"),
+      nrow=2,
+      rel_heights=c(1,0.9)
+    ),
+    ncol=2,
+    rel_widths=c(1,0.95)
   ),
   cowplot::get_legend(ETEplot+theme(legend.position = "bottom")+labs(colour="Analysis")),
   nrow=2,
   rel_heights=c(0.9, 0.1)
 )
-# width: 700, height: 300
+# width: 500, height: 400
