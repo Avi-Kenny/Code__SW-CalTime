@@ -1,0 +1,459 @@
+---
+title: "Australia Disinvestment Case Study Re-Analysis"
+output: html_document
+date: "2024-03-30"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r * Haines EDA}
+library(dplyr)
+library(readxl)
+
+# import population level data
+Haines <- read_xlsx("Results/Haines et al/pmed.1002412.s002.xlsx")
+
+str(Haines)
+
+# outcome
+Haines$los %>% log %>% hist()
+Haines$acute_los %>% log %>% hist()
+plot(Haines$los, Haines$acute_los)
+Haines$value <- log(Haines$acute_los)
+# period
+Haines$sw_step %>% table()
+Haines$period <- Haines$sw_step
+# intervention
+Haines$old_we_exposure %>% table()
+Haines$no_we_exposure %>% table()
+Haines$new_we_exposure %>% table()
+# study
+Haines$study1 %>% table()
+Haines$study2 %>% table()
+# hospital
+Haines$hospital %>% table()
+Haines$site %>% table()
+# ward
+Haines$index_ward %>% table()
+Haines$cluster <- Haines$index_ward
+```
+
+```{r * Haines analysis w/ Exchangeable working corr}
+# Haines outcome of interest
+hist(Haines$value)
+hist(log(Haines$acute_los))
+
+# set up ETI's for Haines data
+## Subset Haines
+Haines1 <- Haines %>% filter(study1==1)
+Haines1$tx.var <- Haines1$no_we_exposure
+table(Haines1$cluster, Haines1$period) %>% mean()
+## TOI sequence
+TOIseq <- as.data.frame(t(matrix(c(1:6))))
+colnames(TOIseq) <- paste0("TOI",1:6)
+TOIseq
+
+## cluster sizes of exposed cluster:periods
+temp <- table(Haines1[Haines1$tx.var==1,]$cluster, Haines1[Haines1$tx.var==1,]$period) %>% as.data.frame()
+temp
+# dummy variable for exposure periods
+temp$Freq <- ifelse(temp$Freq > 0, 1, 0)
+temp
+temp <- temp %>%
+  dplyr::rename(
+    cluster = Var1,
+    period = Var2
+  )
+temp <- temp[order(temp$cluster),]
+temp2 <- as.data.frame(table(temp$cluster, temp$Freq))
+colnames(temp2) <- c("cluster", "Var2" ,"nbaseline")
+temp2 <- temp2 %>% filter(Var2 == 0) %>% dplyr::select(-Var2)
+temp
+temp2
+temp_merge <- merge(temp, temp2, by="cluster")
+temp_merge$period <- as.numeric(as.character(temp_merge$period))
+temp_merge$TOI <- temp_merge$period - temp_merge$nbaseline - temp_merge$Freq
+temp_merge <- temp_merge %>% filter(Freq != 0)
+temp_merge
+
+# merge in cumulative frequency
+Haines1_new <- merge(Haines1, temp_merge %>% dplyr::select(cluster, period, TOI), by=c("cluster","period"), all.x=T)
+Haines1_new$TOI <- ifelse(is.na(Haines1_new$TOI), 0, Haines1_new$TOI)
+Haines1_new$TOI <- as.factor(Haines1_new$TOI)
+Haines1_new$period <- as.factor(Haines1_new$period)
+Haines1_new$cluster <- as.factor(Haines1_new$cluster)
+
+# check
+table(Haines1_new$TOI, Haines1_new$tx.var)
+table(Haines1_new[Haines1_new$tx.var==1,]$cluster, Haines1_new[Haines1_new$tx.var==1,]$period)
+
+# reorder clusters
+table(Haines1_new[Haines1_new$tx.var==1,]$cluster, Haines1_new[Haines1_new$tx.var==1,]$period)
+Haines1_new$cluster_new <- 0
+Haines1_new$cluster_new[Haines1_new$cluster == 5] <- 1.5
+Haines1_new$cluster_new[Haines1_new$cluster == 11] <- 1.11
+Haines1_new$cluster_new[Haines1_new$cluster == 1] <- 2.1
+Haines1_new$cluster_new[Haines1_new$cluster == 12] <- 2.12
+Haines1_new$cluster_new[Haines1_new$cluster == 6] <- 3.6
+Haines1_new$cluster_new[Haines1_new$cluster == 13] <- 3.13
+Haines1_new$cluster_new[Haines1_new$cluster == 2] <- 4.2
+Haines1_new$cluster_new[Haines1_new$cluster == 14] <- 4.14
+Haines1_new$cluster_new[Haines1_new$cluster == 4] <- 5.4
+Haines1_new$cluster_new[Haines1_new$cluster == 15] <- 5.15
+Haines1_new$cluster_new[Haines1_new$cluster == 3] <- 6.3
+Haines1_new$cluster_new[Haines1_new$cluster == 16] <- 6.16
+Haines1_new$cluster_new <- factor(Haines1_new$cluster_new)
+
+# Check
+# constant intervention effects
+table(Haines1_new[Haines1_new$tx.var==1,]$cluster_new, Haines1_new[Haines1_new$tx.var==1,]$period)
+# TOI results
+table(Haines1_new[Haines1_new$TOI==1,]$cluster_new, Haines1_new[Haines1_new$TOI==1,]$period)
+table(Haines1_new[Haines1_new$TOI==2,]$cluster_new, Haines1_new[Haines1_new$TOI==2,]$period)
+table(Haines1_new[Haines1_new$TOI==3,]$cluster_new, Haines1_new[Haines1_new$TOI==3,]$period)
+table(Haines1_new[Haines1_new$TOI==4,]$cluster_new, Haines1_new[Haines1_new$TOI==4,]$period)
+table(Haines1_new[Haines1_new$TOI==5,]$cluster_new, Haines1_new[Haines1_new$TOI==5,]$period)
+table(Haines1_new[Haines1_new$TOI==6,]$cluster_new, Haines1_new[Haines1_new$TOI==6,]$period)
+
+table(Haines1_new$cluster, Haines1_new$period)
+Haines1_new$cluster %>% table()
+Haines1_new$period %>% table()
+
+# average cluster size
+round(table(Haines1_new$cluster)/7)
+
+# create CTI
+Haines1_new %>% str()
+Haines1_new$CTI <- ifelse(Haines1_new$tx.var != 0, paste(Haines1_new$tx.var,Haines1_new$period,sep="_"), 0)
+Haines1_new$CTI
+
+# # Mixed Effects
+modelIT <- lme4::lmer(value~ tx.var + period + (1|cluster_new), data = Haines1_new)
+modelIT
+modelETI <- lme4::lmer(value~ TOI + period + (1|cluster_new), data = Haines1_new)
+modelETI
+modelCTI <- lme4::lmer(value~ CTI + period + (1|cluster_new), data = filter(Haines1_new, period != 7))
+modelCTI
+
+# # exchangeable
+modelIT_OLS <- lm(value~ tx.var + period, data = Haines1_new)
+modelIT_OLS
+modelETI_OLS <- lm(value~ TOI + period, data = Haines1_new)
+modelETI_OLS
+modelCTI_OLS <- lm(value~ CTI + period, data = filter(Haines1_new, period != 7))
+modelCTI_OLS
+
+IT.df <- data.frame(
+  "Estimand" = "IT",
+  "ETE" = 1:6,
+  "CTE" = 2:7,
+  "IT_est" = summary(modelIT)$coefficients[grepl("tx.var",rownames(summary(modelIT)$coefficients)), "Estimate"],
+  "IT_se" = summary(modelIT)$coefficients[grepl("tx.var",rownames(summary(modelIT)$coefficients)), "Std. Error"],
+  
+  "IT_est_OLS" = summary(modelIT_OLS)$coefficients[grepl("tx.var",rownames(summary(modelIT_OLS)$coefficients)), "Estimate"],
+  "IT_se_OLS" = summary(modelIT_OLS)$coefficients[grepl("tx.var",rownames(summary(modelIT_OLS)$coefficients)), "Std. Error"]
+)
+IT.df$CI_95_L <- IT.df$IT_est - 1.96*IT.df$IT_se
+IT.df$CI_95_H <- IT.df$IT_est + 1.96*IT.df$IT_se
+IT.df$CI_95_L_OLS <- IT.df$IT_est_OLS - 1.96*IT.df$IT_se_OLS
+IT.df$CI_95_H_OLS <- IT.df$IT_est_OLS + 1.96*IT.df$IT_se_OLS
+IT.df <- rbind(IT.df,c("IT",0,1,0,0,0,0,0,0,0,0))
+IT.df[c("IT_est","IT_se","CI_95_L","CI_95_H")] <- lapply(IT.df[c("IT_est","IT_se","CI_95_L","CI_95_H")], as.numeric)
+IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+
+IT.df
+
+ETI.df <- data.frame(
+  "Estimand" = "ETE",
+  "ETE" = 1:6,
+  "ETE_est" = summary(modelETI)$coefficients[grepl("TOI",rownames(summary(modelETI)$coefficients)), "Estimate"],
+  "ETE_se" = summary(modelETI)$coefficients[grepl("TOI",rownames(summary(modelETI)$coefficients)), "Std. Error"],
+  "ETATE_est" = sum(summary(modelETI)$coefficients[grepl("TOI",rownames(summary(modelETI)$coefficients)), "Estimate"])/6,
+  "ETATE_se" =   sqrt(sum(vcov(modelETI)[2:7, 2:7])/36),
+  
+  "ETE_est_OLS" = summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Estimate"],
+  "ETE_se_OLS" = summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Std. Error"],
+  "ETATE_est_OLS" = sum(summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Estimate"])/6,
+  "ETATE_se_OLS" =   sqrt(sum(vcov(modelETI_OLS)[2:7, 2:7])/36)
+)
+ETI.df$CI_95_L <- ETI.df$ETE_est - 1.96*ETI.df$ETE_se
+ETI.df$CI_95_H <- ETI.df$ETE_est + 1.96*ETI.df$ETE_se
+ETI.df$CI_95_L_OLS <- ETI.df$ETE_est_OLS - 1.96*ETI.df$ETE_se_OLS
+ETI.df$CI_95_H_OLS <- ETI.df$ETE_est_OLS + 1.96*ETI.df$ETE_se_OLS
+
+ETI.df <- rbind(ETI.df,c("ETE",0,0,0,0,0,0,0,0,0,0,0,0,0))
+ETI.df[c("ETE_est","ETE_se","ETATE_est","ETATE_se","CI_95_L","CI_95_H")] <- lapply(ETI.df[c("ETE_est","ETE_se","ETATE_est","ETATE_se","CI_95_L","CI_95_H")], as.numeric)
+ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+
+ETI.df
+
+CTI.df <- data.frame(
+  "Estimand" = "CTE",
+  "CTE" = 2:6,
+  
+  "CTE_est" = summary(modelCTI)$coefficients[grepl("CTI",rownames(summary(modelCTI)$coefficients)), "Estimate"],
+  "CTE_se" = summary(modelCTI)$coefficients[grepl("CTI",rownames(summary(modelCTI)$coefficients)), "Std. Error"],
+  "CTATE_est" = sum(summary(modelCTI)$coefficients[grepl("CTI",rownames(summary(modelCTI)$coefficients)), "Estimate"])/5,
+  "CTATE_se" =   sqrt(sum(vcov(modelCTI)[2:6, 2:6])/25),
+  
+  "CTE_est_OLS" = summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Estimate"],
+  "CTE_se_OLS" = summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Std. Error"],
+  "CTATE_est_OLS" = sum(summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Estimate"])/5,
+  "CTATE_se_OLS" =   sqrt(sum(vcov(modelCTI_OLS)[2:6, 2:6])/25)
+  
+)
+CTI.df$CI_95_L <- CTI.df$CTE_est - 1.96*CTI.df$CTE_se
+CTI.df$CI_95_H <- CTI.df$CTE_est + 1.96*CTI.df$CTE_se
+CTI.df$CI_95_L_OLS <- CTI.df$CTE_est_OLS - 1.96*CTI.df$CTE_se_OLS
+CTI.df$CI_95_H_OLS <- CTI.df$CTE_est_OLS + 1.96*CTI.df$CTE_se_OLS
+
+CTI.df <- rbind(CTI.df,c("CTE",1,0,0,0,0,0,0,0,0,0,0,0,0))
+CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")] <- lapply(CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")], as.numeric)
+CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+
+CTI.df
+
+```
+
+```{r plot exchangeable working corr}
+# library(ggplot2)
+# library(cowplot)
+# library(dplyr)
+
+# IT.df
+# ETI.df
+# CTI.df
+
+# # Plots with Exchangeable working correlation structure
+# ETE.plots <- cowplot::plot_grid(
+#   IT.df %>% 
+#     ggplot(aes(x = ETE, y = IT_est,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+#     scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+#     theme_bw() +
+#     labs(title="Immediate treatment", x ="Exposure time (s)") +
+#     theme(plot.title = element_text(size = 10)),
+#   ETI.df %>% 
+#     ggplot(aes(x = ETE, y = ETE_est,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+#     geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="blue") +
+#     scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+#     theme_bw() +
+#     labs(title="Exposure time-varying treatment", x ="Exposure time (s)") +
+#     theme(plot.title = element_text(size = 10))
+# )
+# ETE.plots
+
+# CTE.plots <- cowplot::plot_grid(
+#   IT.df %>%
+#     filter(CTE < 7) %>%
+#     ggplot(aes(x = CTE, y = IT_est,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+#     scale_y_continuous(name="IT estimate", limits=c(-0.25, 0.5), n.breaks=6) +
+#     theme_bw() +
+#     labs(title="Immediate treatment", x ="Calendar time (j)") +
+#     theme(plot.title = element_text(size = 10)),
+#   CTI.df %>% 
+#     ggplot(aes(x = CTE, y = CTE_est,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+#     geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="blue") +
+#     scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+#     theme_bw() +
+#     labs(title="Calendar time-varying treatment", x ="Calendar time (j)") +
+#     # ggtitle("Calendar time-varying treatment") +
+#     theme(plot.title = element_text(size = 10))
+# )
+# CTE.plots
+
+# plot_ME <- cowplot::plot_grid(
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Effect curves over exposure time", fontface='bold'),
+#     ETE.plots,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Effect curves over calendar time", fontface='bold'),
+#     CTE.plots,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   ncol=1
+# )
+# plot_ME
+# width: 500, height: 400
+```
+
+Case study reanalyzed with independence working correlation
+```{r plot independence working corr}
+# library(ggplot2)
+# library(cowplot)
+# library(dplyr)
+
+# IT.df
+# ETI.df
+# CTI.df
+
+# Plots with Exchangeable working correlation structure
+# ETE.plots_OLS <- cowplot::plot_grid(
+#   IT.df %>% 
+#     ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+#     scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+#     theme_bw() +
+#     labs(title="Immediate treatment", x ="Exposure time (s)") +
+#     theme(plot.title = element_text(size = 10)),
+#   ETI.df %>% 
+#     ggplot(aes(x = ETE, y = ETE_est_OLS,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+#     geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="blue") +
+#     scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+#     theme_bw() +
+#     labs(title="Exposure time-varying treatment", x ="Exposure time (s)") +
+#     theme(plot.title = element_text(size = 10))
+# )
+# ETE.plots_OLS
+
+# CTE.plots_OLS <- cowplot::plot_grid(
+#   IT.df %>%
+#     filter(CTE < 7) %>%
+#     ggplot(aes(x = CTE, y = IT_est_OLS,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+#     scale_y_continuous(name="IT estimate", limits=c(-0.25, 0.5), n.breaks=6) +
+#     theme_bw() +
+#     labs(title="Immediate treatment", x ="Calendar time (j)") +
+#     theme(plot.title = element_text(size = 10)),
+#   CTI.df %>% 
+#     ggplot(aes(x = CTE, y = CTE_est_OLS,  group=1)) + 
+#     geom_line() + 
+#     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+#     geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="blue") +
+#     scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+#     theme_bw() +
+#     labs(title="Calendar time-varying treatment", x ="Calendar time (j)") +
+#     theme(plot.title = element_text(size = 10))
+# )
+# CTE.plots
+
+# plot_OLS <- cowplot::plot_grid(
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Effect curves over exposure time", fontface='bold'),
+#     ETE.plots_OLS,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Effect curves over calendar time", fontface='bold'),
+#     CTE.plots_OLS,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   ncol=1
+# )
+# plot_OLS
+# width: 500, height: 400
+```
+
+```{r * plot both exchangeable and independence together}
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+
+# cowplot::plot_grid(
+#   ggdraw() + draw_label("Effect curves over exposure time", fontface='bold', size=14),
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Exchangeable working correlation", fontface='bold', size=12),
+#     ETE.plots,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   # plot over exposure time
+#   cowplot::plot_grid(
+#     ggdraw() + draw_label("Independence working correlation", fontface='bold', size=12),
+#     ETE.plots_OLS,
+#     ncol=1, rel_heights=c(0.15, 1)
+#   ),
+#   ncol=1, rel_heights=c(0.15, 1, 1)
+# )
+
+exchangeable.plots <- cowplot::plot_grid(
+  ggdraw() + draw_label("Exchangeable working correlation", fontface='bold', size=12),
+  cowplot::plot_grid(
+  IT.df %>% 
+    ggplot(aes(x = ETE, y = IT_est,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+    scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  ETI.df %>% 
+    ggplot(aes(x = ETE, y = ETE_est,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="blue") +
+    scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  CTI.df %>% 
+    ggplot(aes(x = CTE, y = CTE_est,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="blue") +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+    theme_bw() +
+    labs(x ="Calendar time (j)") +
+    theme(plot.title = element_text(size = 10)),
+  nrow=1
+  ),
+  ncol=1, rel_heights=c(0.1, 1)
+)
+exchangeable.plots
+independence.plots <- cowplot::plot_grid(
+  ggdraw() + draw_label("Independence working correlation", fontface='bold', size=12),
+  cowplot::plot_grid(
+  IT.df %>% 
+    ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+    scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  ETI.df %>% 
+    ggplot(aes(x = ETE, y = ETE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="blue") +
+    scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  CTI.df %>% 
+    ggplot(aes(x = CTE, y = CTE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="blue") +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+    theme_bw() +
+    labs(x ="Calendar time (j)") +
+    theme(plot.title = element_text(size = 10)),
+  nrow=1
+  ),
+  ncol=1, rel_heights=c(0.1, 1)
+)
+independence.plots
+cowplot::plot_grid(
+  exchangeable.plots + panel_border(color="black", size=0.5),
+  independence.plots +panel_border(color="black", size=0.5),
+  ncol=1
+)
+# width: 600, height: 450
+```

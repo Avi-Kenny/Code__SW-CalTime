@@ -1,0 +1,1089 @@
+---
+title: "Misspecification Results"
+output: html_document
+date: "2024-03-30"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r Packages}
+library(dplyr)
+library(ggplot2)
+library(latex2exp)
+```
+
+# ETATE estimator weights
+```{r * Generate ETATE weights function}
+f_varSW_check <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2, 
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  design <- cbind(designT2, designTOI2)
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  return(
+    tail(diag(solve(crossmat)), J-1)
+  )
+}
+f_vcSW_check <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2, 
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  design <- cbind(designT2, designTOI2)
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  return(
+    solve(crossmat)[(J+1):nrow(crossmat), (J+1):ncol(crossmat)]
+  )
+}
+
+f_varSW_check(sigma2_w=1, tau2=0, J=4, I=3, m=10)
+f_vcSW_check(sigma2_w=1, tau2=0, J=4, I=3, m=10)
+
+# to generate the SW weights of each ETI
+f_ETATE_SW_weights <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2,
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  design <- cbind(designT2, designTOI2)
+
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  crossmat
+  weights <- solve(crossmat) %*% (t(design) %*% solve(V))
+
+  weightlist <- list()
+
+  for(d in 1:(J-1)){
+    weights[(J+1):(J+J-1),][d,] # [(J+1):(J+J-1),] corresponding rows for ETI's
+    weightlist <- c(
+      weightlist,
+      list(
+        t(matrix(weights[(J+1):(J+J-1),][d,], nrow=J, ncol=I))
+      )
+    )
+  }
+
+  return(
+    weightlist
+  )
+}
+
+f_ETATE_SW_weights(sigma2_w=1, tau2=0.5, J=3, I=2, m=10) # (X'V^{-1}X)^{-1}XV^{-1}
+f_ETATE_SW_weights(sigma2_w=1, tau2=0.5, J=4, I=3, m=10) # (X'V^{-1}X)^{-1}XV^{-1}
+f_ETATE_SW_weights(sigma2_w=2, tau2=0.5, J=5, I=4, m=100)
+f_ETATE_SW_weights(sigma2_w=2, tau2=0.5, J=6, I=5, m=100)
+
+# to generate the CTI weights from ETATE
+f_ETATE_CTIweights <- function(TOIweights){
+
+  length(TOIweights)
+  CTIsum <- rep(0, length(TOIweights)-1)
+  for(toi in 1:length(TOIweights)){ # for each estimated TOI effect
+    CTI <- c()
+    for(cal in 2:length(TOIweights)){ # for each CTE estimated in each TOI effect
+      CTI <- c(CTI, sum(TOIweights[[toi]][1:(cal-1), cal])) #
+    }
+    CTIsum <- CTIsum + CTI
+  }
+  
+  CTIweights <- CTIsum*((length(TOIweights)-1)/length(TOIweights))
+
+  return(CTIweights)
+}
+
+# results!
+library(MASS)
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=3, I=2, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=4, I=3, m=1)) #%>% MASS::fractions()
+c(12/13, 14/13)
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=5, I=4, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=6, I=5, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=7, I=6, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=8, I=7, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0, J=9, I=8, m=1)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=1, tau2=0, J=10, I=9, m=1)) #%>% MASS::fractions()
+
+# feed same, different values
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0.1, J=4, I=3, m=100)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=0.2, tau2=0.1, J=4, I=3, m=10)) #%>% MASS::fractions()
+
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0.1, J=7, I=6, m=100)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=0.2, tau2=0.1, J=7, I=6, m=10)) #%>% MASS::fractions()
+
+
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=2, tau2=0.1, J=10, I=9, m=100)) #%>% MASS::fractions()
+f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=0.2, tau2=0.1, J=10, I=9, m=10)) #%>% MASS::fractions()
+
+```
+
+```{r * Generate ETATE -> CTATE figures}
+# generate df
+ETATE_CTIweights.df <- c()
+
+for(gamma in c(0, 0.25, 0.5, 0.99)){
+  for(time in 3:10){
+    s2w <- 1
+    K <- 100
+    t2 <- ((s2w/K)*gamma)/(1-gamma)
+    # CTIweights <- f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=1, tau2=t2, J=time, I=(time-1), m=1))
+    CTIweights <- f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=s2w, tau2=t2, J=time, I=(time-1), m=K))
+    CTI <- 2:(length(CTIweights)+1)
+    
+    # add zeroes
+    CTI <- c(CTI, (length(CTI)+2))
+    CTIweights <- c(CTIweights, 0)
+    
+    ETATE_CTIweights.df <- rbind(ETATE_CTIweights.df, cbind(CTI, CTIweights, gamma, time))
+  }
+}
+ETATE_CTIweights.df <- as.data.frame(ETATE_CTIweights.df)
+ETATE_CTIweights.df %>% head()
+ETATE_CTIweights.df %>% str()
+ETATE_CTIweights.df$CTI <- as.factor(ETATE_CTIweights.df$CTI)
+ETATE_CTIweights.df$timelabels <- paste0("J = ", ETATE_CTIweights.df$time)
+ETATE_CTIweights.df$timelabels <- factor(ETATE_CTIweights.df$timelabels , levels=paste0("J = ", unique(ETATE_CTIweights.df$time)))
+
+ETATE_CTIweights.df$gammalabels <- paste0("gamma = ", ETATE_CTIweights.df$gamma)
+
+# plot
+ggplot(filter(ETATE_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  # facet_grid(ICC ~ time
+  facet_grid(timelabels ~ gammalabels) +
+  scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
+  theme_bw() +
+  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+# width 500, height 475
+
+# plot for manuscript
+ETATE_CTIweights.df %>%
+  filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
+  filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
+  ggplot(aes(x=factor(CTI), y=CTIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  # facet_grid(ICC ~ time
+  facet_grid(timelabels ~ gammalabels) +
+  scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
+  theme_bw() +
+  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+# width 500, height 400
+```
+
+```{r * Generate calendar time effects scenario}
+gamma <- 0.99
+s2w <- 1
+K <- 100
+t2 <- ((s2w/K)*gamma)/(1-gamma)
+
+ETATE_CTE_weights <- f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=s2w, tau2=t2, J=10, I=9, m=K))
+ETATE_CTE_weights
+
+CTE_effect0 <- c(1, 1, 1, 1, 1, 1, 1, 1)
+CTE_effect1 <- c(1, 1, 0, 0, 0, 0, 0, 0)
+CTE_effect2 <- c(1, 0.50, 0.1, 0.05, 0.02, 0.01, 0, 0)
+CTE_effect3 <- seq(0,1,length.out=8)
+CTE_effect4 <- c(0, 0, 1, 1, 1, 1, 1, 1)
+CTE_effect5 <- c(0, 0.9, 0.97, 1, 1, 0.97, 0.9, 0)
+CTE_effect6 <- c(1, 0.1, 0.03, 0, 0, 0.03, 0.1, 1)
+
+sum(CTE_effect1 * ETATE_CTE_weights)
+
+CTEtestscenario0 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect0,
+  CTE_weight = sum(CTE_effect0 * ETATE_CTE_weights)/8,
+  scenario = "A"
+)
+CTEtestscenario1 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect1,
+  CTE_weight = sum(CTE_effect1 * ETATE_CTE_weights)/8,
+  scenario = "B"
+)
+CTEtestscenario2 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect2,
+  CTE_weight = sum(CTE_effect2 * ETATE_CTE_weights)/8,
+  scenario="C"
+)
+CTEtestscenario3 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect3,
+  CTE_weight = sum(CTE_effect3 * ETATE_CTE_weights)/8,
+  scenario="D"
+)
+CTEtestscenario4 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect4,
+  CTE_weight = sum(CTE_effect4 * ETATE_CTE_weights)/8,
+  scenario="E"
+)
+CTEtestscenario5 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect5,
+  CTE_weight = sum(CTE_effect5 * ETATE_CTE_weights)/8,
+  scenario="F"
+)
+CTEtestscenario6 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect6,
+  CTE_weight = sum(CTE_effect6 * ETATE_CTE_weights)/8,
+  scenario="G"
+)
+
+CTEtestscenario <- rbind(
+  CTEtestscenario0,
+  CTEtestscenario1,
+  CTEtestscenario2,
+  CTEtestscenario3,
+  CTEtestscenario4,
+  CTEtestscenario5,
+  CTEtestscenario6
+)
+
+ggplot(CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+  geom_point(fill="blue") +
+  geom_line(color="blue") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_hline(aes(yintercept=CTE_weight), linetype="solid", color = "green", lwd=0.75) +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different CTE as analyzed by an ETATE estimator", x ="Calendar time (j)", y = "CTE value")
+# width 600, height 220
+```
+
+# CTATE estimator weights
+```{r * CTATE varcor inversion}
+f_CTATE <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J-1)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=(J-1)))
+ 
+  designCTI <- c()
+  for(b in 2:(J-1)){
+    CTI <- rep(
+      c(
+        rep(0,(b-1)),
+        1,
+        rep(0,(J-1)-1-(b-1))
+      ),
+      b-1
+    )
+    exposedc <- length(CTI)/(J-1) # number of exposed clusters
+    remainingzeros <- rep(0, (I-exposedc)*(J-1))
+    CTIj <- c(CTI, remainingzeros)
+    designCTI <- cbind(designCTI, CTIj)
+  }
+  designCTI
+  
+  designT2
+  designCTI
+  design <- cbind(designT2, designCTI)
+
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J-1, nrow=J-1)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), I))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  return(
+    solve(crossmat)[(J):nrow(crossmat), (J):ncol(crossmat)]
+  )
+}
+f_CTATE(1, 0.5, 7, 6, 1)
+
+f_CTATE(sigma2_w=1, tau2=0.5, J=4, I=3, m=1)
+sigma2_w=1
+tau2=0.5
+J=4
+I=3
+m=1
+gamma <- (tau2)/(sigma2_w/m + tau2)
+
+Diag = (1+gamma)/((1-gamma)*(1+2*gamma))
+Offdiag = (-gamma)/((1-gamma)*(1+2*gamma))
+
+f_CTATE(sigma2_w=1, tau2=0.5, J=4, I=3, m=1)
+(sigma2_w/m + tau2)*(9)*(1/((gamma+2)*(3*gamma+2)))*(1-gamma)*(1+2*gamma) * (2/3)*(1+gamma)
+(sigma2_w/m + tau2)*(9)*(1/((gamma+2)*(3*gamma+2)))*(1-gamma)*(1+2*gamma) * (1/3)*gamma
+
+solve(crossmat)
+- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(1+gamma)*(1-gamma)*(1+2*gamma)
+- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(gamma)*(1-gamma)*(1+2*gamma)
+- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * gamma*(1-gamma)*(1+2*gamma)
+- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (4)*(1+gamma)*(1-gamma)*(1+2*gamma)
+```
+
+```{r * generate CTATE weights function}
+# based on ETATE code (f_ETATE_SW_weights)
+f_CTATE_SW_weights <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J-1)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=(J-1)))
+  
+  designCTI <- c()
+  for(b in 2:(J-1)){
+    CTI <- rep(
+      c(
+        rep(0,(b-1)),
+        1,
+        rep(0,(J-1)-1-(b-1))
+      ),
+      b-1
+    )
+    exposedc <- length(CTI)/(J-1) # number of exposed clusters
+    remainingzeros <- rep(0, (I-exposedc)*(J-1))
+    CTIj <- c(CTI, remainingzeros)
+    designCTI <- cbind(designCTI, CTIj)
+  }
+  designCTI
+  
+  designT2
+  designCTI
+  design <- cbind(designT2, designCTI)
+
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J-1, nrow=J-1)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), I))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  weights <- solve(crossmat) %*% (t(design) %*% solve(V))
+
+  weightlist <- list()
+
+  for(d in 1:(J-2)){
+    # weights[(J+1):(J+J-1),][d,]
+    if((J)==(J-1+J-2)){
+      weightsofinterest <- weights[(J):(J-1+J-2),]
+    }else{
+      weightsofinterest <-  weights[(J):(J-1+J-2),][d,]
+    }
+    weightlist <- c(
+      weightlist,
+      list(
+        # t(matrix(weights[(J+1):(J+J-1),][d,], nrow=J-1, ncol=I))
+        t(matrix(weightsofinterest, nrow=J-1, ncol=I))
+      )
+    )
+  }
+
+  return(
+    weightlist
+  )
+  
+}
+
+
+f_CTATE_SW_weights(sigma2_w=0.000001, tau2=0.5, J=3, I=2, m=10)
+f_CTATE_SW_weights(sigma2_w=0.000001, tau2=0.5, J=4, I=3, m=10) # this looks right # (X'V^{-1}X)^{-1}XV^{-1}
+f_CTATE_SW_weights(sigma2_w=0.000001, tau2=0.5, J=5, I=4, m=10)
+f_CTATE_SW_weights(sigma2_w=0.000001, tau2=0.5, J=6, I=5, m=10)
+
+f_CTATE_ETIweights <- function(CTIweights){
+
+  length(CTIweights)
+  
+  CTIweights_sum <- Reduce(`+`, CTIweights) # sum up CTI weights across CTI's
+  CTIweights_sum
+  
+  ETEsum <- c()
+  
+  for(nexpo in 1:(ncol(CTIweights_sum)-1)){
+    ETEsum <- c(ETEsum,
+    sum(
+        CTIweights_sum[row(CTIweights_sum)+nexpo==col(CTIweights_sum)] # diagonal for each ETE
+      )
+    )
+  }
+
+  return(ETEsum)
+}
+
+
+f_CTATE_SW_weights(sigma2_w=1, tau2=0, J=3, I=2, m=10)
+f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=1, tau2=0, J=3, I=2, m=10))
+
+f_CTATE_SW_weights(sigma2_w=1, tau2=0.5, J=4, I=3, m=10)
+f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=1, tau2=0.5, J=4, I=3, m=10))
+f_CTATE_SW_weights(sigma2_w=2, tau2=0.5, J=5, I=4, m=100)
+f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=2, tau2=0.5, J=5, I=4, m=100))
+f_CTATE_SW_weights(sigma2_w=2, tau2=0.5, J=6, I=5, m=100)
+f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=2, tau2=0.5, J=6, I=5, m=100))
+
+# results are correct
+```
+
+```{r Generate CTATE -> ETATE figures}
+# generate df
+CTATE_ETIweights.df <- c()
+
+for(gamma in c(0, 0.25, 0.5, 0.99)){
+  for(time in 3:10){
+    s2w <- 1
+    K <- 100
+    t2 <- ((s2w/K)*gamma)/(1-gamma)
+    ETIweights <- f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=s2w, tau2=t2, J=time, I=(time-1), m=K))
+    
+    ETI <- 1:length(ETIweights)
+    
+    # add zeroes
+    ETI <- c(ETI, (length(ETI)+1))
+    ETIweights <- c(ETIweights, 0)
+    
+    CTATE_ETIweights.df <- rbind(CTATE_ETIweights.df, cbind(ETI, ETIweights, gamma, time))
+  }
+}
+CTATE_ETIweights.df <- as.data.frame(CTATE_ETIweights.df)
+CTATE_ETIweights.df %>% head()
+CTATE_ETIweights.df %>% str()
+CTATE_ETIweights.df$ETI <- as.factor(CTATE_ETIweights.df$ETI)
+CTATE_ETIweights.df$timelabels <- paste0("J = ", CTATE_ETIweights.df$time)
+CTATE_ETIweights.df$timelabels <- factor(CTATE_ETIweights.df$timelabels , levels=paste0("J = ", unique(CTATE_ETIweights.df$time)))
+
+CTATE_ETIweights.df$gammalabels <- paste0("gamma = ", CTATE_ETIweights.df$gamma)
+
+# plot
+ggplot(filter(CTATE_ETIweights.df), aes(x=factor(ETI), y=ETIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
+  theme_bw() +
+  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+# width 500, height 475
+
+# plot for manuscript
+CTATE_ETIweights.df %>%
+  filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
+  filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
+  ggplot(aes(x=factor(ETI), y=ETIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
+  theme_bw() +
+  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+# width 500, height 400
+```
+
+```{r * Generate exposure time effects scenario}
+library(ggplot2)
+
+gamma <- 0.99
+s2w <- 1
+K <- 100
+t2 <- ((s2w/K)*gamma)/(1-gamma)
+
+f_CTATE_SW_weights(sigma2_w=s2w, tau2=t2, J=4, I=3, m=K)
+
+sum(f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=s2w, tau2=t2, J=5, I=4, m=K)))
+
+CTATE_ETE_weights <- f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=s2w, tau2=t2, J=10, I=9, m=K))
+CTATE_ETE_weights
+
+ETE_effect0 <- c(1, 1, 1, 1, 1, 1, 1, 1)
+ETE_effect1 <- c(1, 1, 1, 1, 1, 0, 0, 0)
+ETE_effect2 <- c(0, 0, 0.01, 0.02, 0.05, 0.1, 0.50, 1)
+ETE_effect3 <- seq(0,1,length.out=8)
+ETE_effect4 <- c(0, 0, 0, 0, 0, 1, 1, 1)
+ETE_effect5 <- c(0, 0.9, 0.97, 1, 1, 0.97, 0.9, 0)
+ETE_effect6 <- c(1, 0.1, 0.03, 0, 0, 0.03, 0.1, 1)
+
+sum(ETE_effect1 * CTATE_ETE_weights)
+sum(ETE_effect2 * CTATE_ETE_weights)
+sum(ETE_effect4 * CTATE_ETE_weights)
+sum(ETE_effect5 * CTATE_ETE_weights)
+sum(ETE_effect6 * CTATE_ETE_weights)
+
+ETEtestscenario0 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect0,
+  ETE_weight = sum(ETE_effect0 * CTATE_ETE_weights)/8,
+  scenario = "A"
+)
+ETEtestscenario1 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect1,
+  ETE_weight = sum(ETE_effect1 * CTATE_ETE_weights)/8,
+  scenario = "B"
+)
+ETEtestscenario2 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect2,
+  ETE_weight = sum(ETE_effect2 * CTATE_ETE_weights)/8,
+  scenario="C"
+)
+ETEtestscenario3 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect3,
+  ETE_weight = sum(ETE_effect3 * CTATE_ETE_weights)/8,
+  scenario="D"
+)
+ETEtestscenario4 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect4,
+  ETE_weight = sum(ETE_effect4 * CTATE_ETE_weights)/8,
+  scenario="E"
+)
+ETEtestscenario5 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect5,
+  ETE_weight = sum(ETE_effect5 * CTATE_ETE_weights)/8,
+  scenario="F"
+)
+ETEtestscenario6 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8),
+  ETE_effect = ETE_effect6,
+  ETE_weight = sum(ETE_effect6 * CTATE_ETE_weights)/8,
+  scenario="G"
+)
+
+
+ETEtestscenario <- rbind(
+  ETEtestscenario0,
+  ETEtestscenario1,
+  ETEtestscenario2,
+  ETEtestscenario3,
+  ETEtestscenario4,
+  ETEtestscenario5,
+  ETEtestscenario6
+)
+
+ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+  geom_point(fill="blue") +
+  geom_line(color="blue") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_hline(aes(yintercept=ETE_weight), linetype="solid", color = "green", lwd=0.75) +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different ETE as analyzed by a CTATE estimator", x ="Exposure time (s)", y = "ETE value") +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1))
+
+# width 600, height 220
+```
+
+# IT estimator weights
+```{r * Generate IT weights function}
+# generate variance covariance matrix
+f_varSW_check <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2, 
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  design <- cbind(designT2, designTOI2)
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  return(
+    tail(diag(solve(crossmat)), J-1)
+  )
+}
+f_vcSW_check <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2, 
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  design <- cbind(designT2, designTOI2)
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  
+  return(
+    solve(crossmat)[(J+1):nrow(crossmat), (J+1):ncol(crossmat)]
+  )
+}
+
+f_varSW_check(sigma2_w=1, tau2=0, J=4, I=3, m=10)
+f_vcSW_check(sigma2_w=1, tau2=0, J=4, I=3, m=10)
+
+# to generate the SW weights of each ETI
+f_IT_SW_weights <- function(sigma2_w, tau2, J, I, m){
+  designT <- diag(J)
+  designT
+  designT2 <- t(matrix(rep(designT, J-1), nrow=J))
+  designTOI <- diag(J-1)
+  designTOI
+  designTOI2 <- t(matrix(c(rep(0, 1*(J-1)), designTOI), nrow=J-1, ncol=J))
+  for(i in 2:(J-1)){
+    designTOI2 <- suppressWarnings(
+      rbind(
+        designTOI2, 
+        t(matrix(c(rep(0, i*(J-1)), designTOI), nrow=J-1, ncol=J))
+      )
+    )
+  }
+  designT2
+  designTOI2
+  designIT <- rowSums(designTOI2)
+  design <- cbind(designT2, designIT)
+  
+  sigma2 <- sigma2_w/m
+  R <- matrix(tau2, ncol=J, nrow=J)
+  diag(R) <- sigma2 + tau2
+  R
+  V <- Matrix::bdiag(rep(list(R), J-1))
+
+  crossmat <- (I/(J-1))*(t(design) %*% solve(V) %*% (design))
+  crossmat
+  weights <- solve(crossmat) %*% (t(design) %*% solve(V))
+  weights
+  
+  weightlist <- t(matrix(weights[J+1,], nrow=J, ncol=I))
+  
+  return(
+    weightlist
+  )
+}
+
+# checks
+f_IT_SW_weights(sigma2_w=1, tau2=0.5, J=3, I=2, m=10) # (X'V^{-1}X)^{-1}XV^{-1}
+f_IT_SW_weights(sigma2_w=1, tau2=0.5, J=4, I=3, m=10) # (X'V^{-1}X)^{-1}XV^{-1}
+f_IT_SW_weights(sigma2_w=2, tau2=0.5, J=5, I=4, m=100)
+f_IT_SW_weights(sigma2_w=2, tau2=0.5, J=6, I=5, m=100)
+
+# check
+f_IT_SW_weights(sigma2_w=2, tau2=0.5, J=10, I=9, m=1000)
+sigma2_w = 2
+tau2 = 0.5
+J = 10
+I = 9
+m = 1000
+gamma = tau2/((sigma2_w/m)+tau2)
+gamma
+# check
+Kappa <- 12*(1+gamma*I)/(I*(I+1)*(gamma*I^2+2*I-gamma*I-2)) 
+Kappa
+j=9
+Kappa * (j-1)*(I+1-j)*(1-(1/(2*(1+gamma*I)))*gamma*I) # works
+Kappa * (j-1)*(I+1-j)*(2+gamma*I)/(2+2*gamma*I) # works
+
+f_IT_CTIweights <- function(ITweights){
+
+  CTI <- c()
+  for(cal in 2:(ncol(ITweights)-1)){ # for each CTE estimated in each TOI effect
+    CTI <- c(CTI, sum(ITweights[1:(cal-1), cal])) #
+  }
+  CTIweights <- CTI*(ncol(ITweights)-2)
+  
+  return(CTIweights)
+}
+
+f_IT_ETIweights <- function(ITweights){
+  
+  CTIweights_sum <- ITweights  
+  
+  ETEsum <- c()
+  
+  for(nexpo in 1:(ncol(CTIweights_sum)-1)){
+    ETEsum <- c(ETEsum,
+    sum(
+        CTIweights_sum[row(CTIweights_sum)+nexpo==col(CTIweights_sum)] # diagonal for each ETE
+      )
+    )
+  }
+  
+  ETEweights <- ETEsum * length(ETEsum)
+  
+  return(ETEweights)
+}
+```
+
+```{r * Generate IT -> ETI figures}
+library(dplyr)
+
+# generate df
+IT_ETIweights.df <- c()
+
+for(gamma in c(0, 0.25, 0.5, 0.99)){
+  for(time in 3:10){
+    s2w <- 1
+    K <- 100
+    t2 <- ((s2w/K)*gamma)/(1-gamma)
+    ETIweights <- f_IT_ETIweights(f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=time, I=(time-1), m=K))
+    ETI <- 1:length(ETIweights)
+    
+    IT_ETIweights.df <- rbind(IT_ETIweights.df, cbind(ETI, ETIweights, gamma, time))
+  }
+}
+IT_ETIweights.df <- as.data.frame(IT_ETIweights.df)
+IT_ETIweights.df %>% head()
+IT_ETIweights.df %>% str()
+IT_ETIweights.df$ETI <- as.factor(IT_ETIweights.df$ETI)
+IT_ETIweights.df$timelabels <- paste0("J = ", IT_ETIweights.df$time)
+IT_ETIweights.df$timelabels <- factor(IT_ETIweights.df$timelabels , levels=paste0("J = ", unique(IT_ETIweights.df$time)))
+
+IT_ETIweights.df$gammalabels <- paste0("gamma = ", IT_ETIweights.df$gamma)
+
+# plot (for Appendix)
+ggplot(IT_ETIweights.df, aes(x=factor(ETI), y=ETIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  theme_bw() +
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+# width 500, height 475
+
+# plot for manuscript
+IT_ETIweights.df %>%
+  filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
+  filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
+  ggplot(aes(x=factor(ETI), y=ETIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  theme_bw() +
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+# width 500, height 400
+```
+
+```{r * Generate IT exposure time effects scenario}
+gamma <- 0.99
+s2w <- 1
+K <- 100
+t2 <- ((s2w/K)*gamma)/(1-gamma)
+
+f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=4, I=3, m=K)
+
+sum(f_IT_ETIweights(f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=5, I=4, m=K)))
+
+IT_ETE_weights <- f_IT_ETIweights(f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=10, I=9, m=K))
+IT_ETE_weights
+
+ETE_effect0 <- c(1, 1, 1, 1, 1, 1, 1, 1)
+ETE_effect0 <- c(ETE_effect0, 1)
+ETE_effect1 <- c(1, 1, 1, 1, 1, 0, 0, 0)
+ETE_effect1 <- c(ETE_effect1, 0)
+# ETE_effect2 <- c(1, 0.50, 0.1, 0.05, 0.02, 0.01, 0, 0)
+ETE_effect2 <- c(0, 0, 0.01, 0.02, 0.05, 0.1, 0.50, 1)
+ETE_effect2 <- c(0, ETE_effect2)
+# ETE_effect3 <- seq(0,1,length.out=8)
+ETE_effect3 <- seq(0,1,length.out=9)
+ETE_effect4 <- c(0, 0, 0, 0, 0, 1, 1, 1)
+ETE_effect4 <- c(ETE_effect4, 1)
+# ETE_effect5 <- c(0, 0.9, 0.97, 1, 1, 0.97, 0.9, 0)
+ETE_effect5 <- c(0, 0.9, 0.97, 1, 1, 1, 0.97, 0.9, 0)
+# ETE_effect6 <- c(1, 0.1, 0.03, 0, 0, 0.03, 0.1, 1)
+ETE_effect6 <- c(1, 0.1, 0.03, 0, 0, 0, 0.03, 0.1, 1)
+
+sum(ETE_effect0 * IT_ETE_weights)
+sum(ETE_effect1 * IT_ETE_weights)
+sum(ETE_effect2 * IT_ETE_weights)
+sum(ETE_effect4 * IT_ETE_weights)
+sum(ETE_effect5 * IT_ETE_weights)
+sum(ETE_effect6 * IT_ETE_weights)
+
+ETEtestscenario0 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect0,
+  ETE_weight = sum(ETE_effect0 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario = "A"
+)
+ETEtestscenario1 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect1,
+  ETE_weight = sum(ETE_effect1 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario = "B"
+)
+ETEtestscenario2 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect2,
+  ETE_weight = sum(ETE_effect2 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario="C"
+)
+ETEtestscenario3 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect3,
+  ETE_weight = sum(ETE_effect3 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario="D"
+)
+ETEtestscenario4 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect4,
+  ETE_weight = sum(ETE_effect4 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario="E"
+)
+ETEtestscenario5 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect5,
+  ETE_weight = sum(ETE_effect5 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario="F"
+)
+ETEtestscenario6 <- data.frame(
+  ETE = c(1,2,3,4,5,6,7,8,9),
+  ETE_effect = ETE_effect6,
+  ETE_weight = sum(ETE_effect6 * IT_ETE_weights)/length(IT_ETE_weights),
+  scenario="G"
+)
+
+
+ETEtestscenario <- rbind(
+  ETEtestscenario0,
+  ETEtestscenario1,
+  ETEtestscenario2,
+  ETEtestscenario3,
+  ETEtestscenario4,
+  ETEtestscenario5,
+  ETEtestscenario6
+)
+
+ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+  geom_point(fill="blue") +
+  geom_line(color="blue") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_hline(aes(yintercept=ETE_weight), linetype="solid", color = "green", lwd=0.75) +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different ETE as analyzed by an IT estimator", x ="Exposure time (s)", y = "ETE value") +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1))
+# width 600, height 220
+```
+
+```{r * Generate IT -> CTI figures}
+# generate df
+IT_CTIweights.df <- c()
+
+for(gamma in c(0, 0.25, 0.5, 0.99)){
+  for(time in 3:10){
+    s2w <- 1
+    K <- 100
+    t2 <- ((s2w/K)*gamma)/(1-gamma)
+    CTIweights <- f_IT_CTIweights(f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=time, I=(time-1), m=K))
+    CTI <- 2:(length(CTIweights)+1)
+    
+    # add zeroes
+    CTI <- c(CTI, (length(CTI)+2))
+    CTIweights <- c(CTIweights, 0)
+    
+    IT_CTIweights.df <- rbind(IT_CTIweights.df, cbind(CTI, CTIweights, gamma, time))
+  }
+}
+IT_CTIweights.df <- as.data.frame(IT_CTIweights.df)
+IT_CTIweights.df %>% head()
+IT_CTIweights.df %>% str()
+IT_CTIweights.df$CTI <- as.factor(IT_CTIweights.df$CTI)
+IT_CTIweights.df$timelabels <- paste0("J = ", IT_CTIweights.df$time)
+IT_CTIweights.df$timelabels <- factor(IT_CTIweights.df$timelabels , levels=paste0("J = ", unique(IT_CTIweights.df$time)))
+
+IT_CTIweights.df$gammalabels <- paste0("gamma = ", IT_CTIweights.df$gamma)
+
+# plot
+ggplot(filter(IT_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) + 
+  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  theme_bw() +
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+# width 500, height 475
+
+# plot for manuscript
+IT_CTIweights.df %>%
+  filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
+  filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
+  ggplot(aes(x=factor(CTI), y=CTIweights)) + 
+ geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  facet_grid(timelabels ~ gammalabels) +
+  theme_bw() +
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+# width 500, height 400
+```
+
+```{r * Generate IT calendar time effects scenario}
+gamma <- 0.99
+s2w <- 1
+K <- 100
+t2 <- ((s2w/K)*gamma)/(1-gamma)
+
+IT_CTE_weights <- f_IT_CTIweights(f_IT_SW_weights(sigma2_w=s2w, tau2=t2, J=10, I=9, m=K))
+IT_CTE_weights
+
+CTE_effect0 <- c(1, 1, 1, 1, 1, 1, 1, 1)
+CTE_effect1 <- c(1, 1, 0, 0, 0, 0, 0, 0)
+CTE_effect2 <- c(1, 0.50, 0.1, 0.05, 0.02, 0.01, 0, 0)
+CTE_effect3 <- seq(0,1,length.out=8)
+CTE_effect4 <- c(0, 0, 1, 1, 1, 1, 1, 1)
+# CTE_effect4 <- c(0, 0, 0.3, 1, 1, 1, 1, 1)
+CTE_effect5 <- c(0, 0.9, 0.97, 1, 1, 0.97, 0.9, 0)
+CTE_effect6 <- c(1, 0.1, 0.03, 0, 0, 0.03, 0.1, 1)
+
+sum(CTE_effect1 * ETATE_CTE_weights)
+
+CTEtestscenario0 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect0,
+  CTE_weight = sum(CTE_effect0 * IT_CTE_weights)/8,
+  scenario = "A"
+)
+CTEtestscenario1 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect1,
+  CTE_weight = sum(CTE_effect1 * IT_CTE_weights)/8,
+  scenario = "B"
+)
+CTEtestscenario2 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect2,
+  CTE_weight = sum(CTE_effect2 * IT_CTE_weights)/8,
+  scenario="C"
+)
+CTEtestscenario3 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect3,
+  CTE_weight = sum(CTE_effect3 * IT_CTE_weights)/8,
+  scenario="D"
+)
+CTEtestscenario4 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect4,
+  CTE_weight = sum(CTE_effect4 * IT_CTE_weights)/8,
+  scenario="E"
+)
+CTEtestscenario5 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect5,
+  CTE_weight = sum(CTE_effect5 * IT_CTE_weights)/8,
+  scenario="F"
+)
+CTEtestscenario6 <- data.frame(
+  CTE = c(2,3,4,5,6,7,8,9),
+  CTE_effect = CTE_effect6,
+  CTE_weight = sum(CTE_effect6 * IT_CTE_weights)/8,
+  scenario="G"
+)
+
+IT_CTEtestscenario <- rbind(
+  CTEtestscenario0,
+  CTEtestscenario1,
+  CTEtestscenario2,
+  CTEtestscenario3,
+  CTEtestscenario4,
+  CTEtestscenario5,
+  CTEtestscenario6
+)
+
+ggplot(IT_CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+  geom_point(fill="blue") +
+  geom_line(color="blue") +
+  geom_hline(yintercept=0, linetype="dashed", color = "black") +
+  geom_hline(aes(yintercept=CTE_weight), linetype="solid", color = "green", lwd=0.75) +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different CTE as analyzed by an IT estimator", x ="Calendar time (j)", y = "CTE value")
+
+# width 600, height 220
+```

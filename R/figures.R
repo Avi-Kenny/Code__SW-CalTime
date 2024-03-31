@@ -149,7 +149,7 @@ ETEplot_ME <-  ggplot(ETE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) +
   scale_color_manual(values = colors) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title="Exchangeable", x ="Exposure time (s)", y = "ETE")
+  labs(title="Exchangeable working correlation", x ="Exposure time (s)", y = "ETE")
 CTEplot_ME <- ggplot(CTE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkred", color="darkred") +
   geom_line(color="darkred") +
@@ -159,7 +159,7 @@ CTEplot_ME <- ggplot(CTE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
   scale_color_manual(values = colors) +
   theme_bw() +
-  labs(x ="Calendar time (j)", y = "CTE")
+  labs(title="Exchangeable working correlation", x ="Calendar time (j)", y = "CTE")
 ETEplot_OLS <-  ggplot(ETE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkgreen", color="darkgreen") +
   geom_line(color="darkgreen") +
@@ -170,7 +170,7 @@ ETEplot_OLS <-  ggplot(ETE.df_OLS, aes(x=factor(time), y=effect_curve, group=1))
   scale_color_manual(values = colors) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title="Independence", x ="Exposure time (s)", y = NULL)
+  labs(title="Independence working correlation", x ="Exposure time (s)", y = NULL)
 CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkred", color="darkred") +
   geom_line(color="darkred") +
@@ -180,27 +180,52 @@ CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) 
   geom_line(aes(y = CTATE, color = "CTATE")) +
   scale_color_manual(values = colors) +
   theme_bw() +
-  labs(x ="Calendar time (j)", y = NULL)
+  labs(title="Independence working correlation", x ="Calendar time (j)", y = NULL)
+
 # cowplot altogether:
+# cowplot::plot_grid(
+#   cowplot::plot_grid(
+#     cowplot::plot_grid(
+#       ETEplot_ME+theme(legend.position = "none") + ylim(-1.5, 6),
+#       CTEplot_ME+theme(legend.position = "none"),
+#       nrow=2,
+#       rel_heights=c(1,0.9)
+#     ),
+#     cowplot::plot_grid(
+#       ETEplot_OLS+theme(legend.position = "none") + ylim(-1.5, 6),
+#       CTEplot_OLS+theme(legend.position = "none"),
+#       nrow=2,
+#       rel_heights=c(1,0.9)
+#     ),
+#     ncol=2,
+#     rel_widths=c(1,0.95)
+#   ),
+#   cowplot::get_legend(ETEplot_ME+theme(legend.position = "bottom")+labs(colour="Analysis")),
+#   nrow=2,
+#   rel_heights=c(0.9, 0.1)
+# )
+# width: 500, height: 400
+
+# exposure time-varying plots
 cowplot::plot_grid(
   cowplot::plot_grid(
-    cowplot::plot_grid(
-      ETEplot_ME+theme(legend.position = "none"),
-      CTEplot_ME+theme(legend.position = "none"),
-      nrow=2,
-      rel_heights=c(1,0.9)
-    ),
-    cowplot::plot_grid(
-      ETEplot_OLS+theme(legend.position = "none"),
-      CTEplot_OLS+theme(legend.position = "none"),
-      nrow=2,
-      rel_heights=c(1,0.9)
-    ),
-    ncol=2,
-    rel_widths=c(1,0.95)
+    ETEplot_ME+theme(legend.position = "none") + ylim(-1.5, 6),
+    ETEplot_OLS+theme(legend.position = "none") + ylim(-1.5, 6),
+    nrow=1, rel_widths=c(1,0.95)
   ),
-  cowplot::get_legend(ETEplot+theme(legend.position = "bottom")+labs(colour="Analysis")),
-  nrow=2,
-  rel_heights=c(0.9, 0.1)
+  cowplot::get_legend(ETEplot_ME+theme(legend.position = "bottom")+labs(colour="Analysis")),
+  nrow=2, rel_heights=c(0.9, 0.1)
 )
-# width: 500, height: 400
+# width: 600, height: 320
+
+cowplot::plot_grid(
+  cowplot::plot_grid(
+    CTEplot_ME+theme(legend.position = "none"),
+    CTEplot_OLS+theme(legend.position = "none"),
+    nrow=1, rel_widths=c(1,0.95)
+  ),
+  cowplot::get_legend(CTEplot_ME+theme(legend.position = "bottom")+labs(colour="Analysis")),
+  nrow=2, rel_heights=c(0.9, 0.1)
+)
+# width: 600, height: 320
+
