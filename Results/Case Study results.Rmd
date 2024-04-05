@@ -215,8 +215,21 @@ CTI.df <- rbind(CTI.df,c("CTE",1,0,0,0,0,0,0,0,0,0,0,0,0))
 CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")] <- lapply(CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")], as.numeric)
 CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
 
-CTI.df
+# Add TATE confidence intervals
+# ETATE CI
+ETI.df$ETATE_CI_95_L <- ETI.df$ETATE_est - 1.96*ETI.df$ETATE_se
+ETI.df$ETATE_CI_95_H <- ETI.df$ETATE_est + 1.96*ETI.df$ETATE_se
+ETI.df$ETATE_CI_95_L_OLS <- ETI.df$ETATE_est_OLS - 1.96*ETI.df$ETATE_se_OLS
+ETI.df$ETATE_CI_95_H_OLS <- ETI.df$ETATE_est_OLS + 1.96*ETI.df$ETATE_se_OLS
+ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS")] <- lapply(ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS")], as.numeric)
 
+
+# CTATE CI
+CTI.df$CTATE_CI_95_L <- CTI.df$CTATE_est - 1.96*CTI.df$CTATE_se
+CTI.df$CTATE_CI_95_H <- CTI.df$CTATE_est + 1.96*CTI.df$CTATE_se
+CTI.df$CTATE_CI_95_L_OLS <- CTI.df$CTATE_est_OLS - 1.96*CTI.df$CTATE_se_OLS
+CTI.df$CTATE_CI_95_H_OLS <- CTI.df$CTATE_est_OLS + 1.96*CTI.df$CTATE_se_OLS
+CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS")] <- lapply(CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS")], as.numeric)
 ```
 
 ```{r plot exchangeable working corr}
@@ -389,7 +402,13 @@ exchangeable.plots <- cowplot::plot_grid(
     ggplot(aes(x = ETE, y = IT_est,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
-    scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+    # IT
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est)), colour="#619CFF") +
+    # IT CI L
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L)), colour="#619CFF", linetype = "dashed") +
+    # IT CI H
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H)), colour="#619CFF", linetype = "dashed") +
+    scale_y_continuous(name="IT estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -397,8 +416,13 @@ exchangeable.plots <- cowplot::plot_grid(
     ggplot(aes(x = ETE, y = ETE_est,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="blue") +
-    scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+    # ETATE
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="#00BA38") +
+    # ETATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L)), colour="#00BA38", linetype = "dashed") +
+    # ETATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H)), colour="#00BA38", linetype = "dashed") +
+    scale_y_continuous(name="ETE estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -406,8 +430,13 @@ exchangeable.plots <- cowplot::plot_grid(
     ggplot(aes(x = CTE, y = CTE_est,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="blue") +
-    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+    # CTATE
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="#F8766D") +
+    # CTATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L)), colour="#F8766D", linetype = "dashed") +
+    # CTATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H)), colour="#F8766D", linetype = "dashed") +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Calendar time (j)") +
     theme(plot.title = element_text(size = 10)),
@@ -423,7 +452,13 @@ independence.plots <- cowplot::plot_grid(
     ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
-    scale_y_continuous(name="IT estimate", limits=c(0, 0.5)) +
+    # IT
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est_OLS)), colour="#619CFF") +
+    # IT CI L
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS)), colour="#619CFF", linetype = "dashed") +
+    # IT CI H
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS)), colour="#619CFF", linetype = "dashed") +
+    scale_y_continuous(name="IT estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -431,8 +466,13 @@ independence.plots <- cowplot::plot_grid(
     ggplot(aes(x = ETE, y = ETE_est_OLS,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="blue") +
-    scale_y_continuous(name="ETE estimate", limits=c(0, 0.5)) +
+    # ETATE
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="#00BA38") +
+    # ETATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS)), colour="#00BA38", linetype = "dashed") +
+    # ETATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS)), colour="#00BA38", linetype = "dashed") +
+    scale_y_continuous(name="ETE estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -440,8 +480,13 @@ independence.plots <- cowplot::plot_grid(
     ggplot(aes(x = CTE, y = CTE_est_OLS,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="blue") +
-    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5), n.breaks = 6) +
+    # CTATE
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="#F8766D") +
+     # CTATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS)), colour="#F8766D", linetype = "dashed") +
+    # CTATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS)), colour="#F8766D", linetype = "dashed") +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5)) +
     theme_bw() +
     labs(x ="Calendar time (j)") +
     theme(plot.title = element_text(size = 10)),
