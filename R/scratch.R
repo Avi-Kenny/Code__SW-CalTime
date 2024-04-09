@@ -1,4 +1,37 @@
 
+# Demonstration of IT estimator converging to the opposite sign
+if (T) {
+  
+  n_time_points <- 10
+  n_ind_per_cluster <- 50
+  # gamma_j_true <- c(-1,0,0,1,1,0,0,-1)
+  gamma_j_true <- c(-3,0,0,2,2,0,0,-3)
+  dat <- generate_dataset(
+    data_type = "normal",
+    mu = 5,
+    sigma = 0.0001,
+    tau = 0.01,
+    # beta_j = c(0,0,0,0),
+    beta_j = rep(0, n_time_points), # KL attempt # linear period effects
+    delta_s = c(0,0,0,0,0,0,0,0,0),
+    gamma_j = c(0,gamma_j_true,0),
+    n_clusters = (n_time_points-1)*2, # KL attempt # generalize # of clusters
+    n_time_points = n_time_points, # KL attempt # set n_time_periods in levels.R
+    n_ind_per_cluster = n_ind_per_cluster, # KL attempt # set n_ind_per_cluster in levels.R
+    n_extra_time_points = 0 # KL attempt # set n_extra_time_points in levels.$
+  )
+  
+  model_obj <- lme4::lmer(
+    y ~ factor(j) + x_ij + (1|i),
+    data = dat
+  )
+  print("CTATE-hat")
+  print(summary(model_obj)$coefficients["x_ij", "Estimate"])
+  print("CTATE-true")
+  print(mean(gamma_j_true))
+
+}
+
 # Testing out time trend function
 if (F) {
   
