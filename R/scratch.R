@@ -11,14 +11,13 @@ if (T) {
     mu = 5,
     sigma = 0.0001,
     tau = 0.01,
-    # beta_j = c(0,0,0,0),
-    beta_j = rep(0, n_time_points), # KL attempt # linear period effects
+    beta_j = rep(0, n_time_points),
     delta_s = c(0,0,0,0,0,0,0,0,0),
     gamma_j = c(0,gamma_j_true,0),
-    n_clusters = (n_time_points-1)*2, # KL attempt # generalize # of clusters
-    n_time_points = n_time_points, # KL attempt # set n_time_periods in levels.R
-    n_ind_per_cluster = n_ind_per_cluster, # KL attempt # set n_ind_per_cluster in levels.R
-    n_extra_time_points = 0 # KL attempt # set n_extra_time_points in levels.$
+    n_clusters = (n_time_points-1)*2,
+    n_time_points = n_time_points,
+    n_ind_per_cluster = n_ind_per_cluster,
+    n_extra_time_points = 0
   )
   
   model_obj <- lme4::lmer(
