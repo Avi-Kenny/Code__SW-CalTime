@@ -1,0 +1,83 @@
+---
+title: "Effect curve figures"
+output: html_document
+date: "2024-04-05"
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r generate 3 cluster data}
+IT <- 2
+ETI <- 1
+# CTI <- c(0, 0, 2, 3, -2)
+a1 <- 7
+a2 <- 6
+a3 <- 5
+cluster1 <- data.frame(
+  cluster="cluster 1",
+  Time = c(0:4), 
+  IT = a1 + c(0, IT, IT, IT, IT),
+  ETI = a1 + c(0,0,1,2,3)*ETI,
+  CTI = a1 + c(0, 0, 4, 5, 2)
+)
+cluster2 <- data.frame(
+  cluster="cluster 2",
+  Time = c(0:4), 
+  IT = a2 + c(0, 0, IT, IT, IT),
+  ETI = a2 + c(0,0,0,1,2)*ETI,
+  CTI = a2 + c(0, 0, 0, 1, -2)
+)
+cluster3 <- data.frame(
+  cluster="cluster 3",
+  Time = c(0:4), 
+  IT = a3 + c(0, 0, 0, IT, IT),
+  ETI = a3 + c(0,0,0,0,1)*ETI,
+  CTI = a3 + c(0, 0, 0, 0, -3)
+)
+cluster1
+cluster2
+cluster3
+
+ex.df <- rbind(cluster1, cluster2, cluster3)
+```
+
+```{r graph}
+library(dplyr)
+library(ggplot2)
+library(cowplot)
+
+ex.df
+
+cowplot::plot_grid(
+  ggplot(ex.df, aes(x = Time, y = IT, color = cluster)) +
+    geom_step() +
+    scale_colour_manual(values=rep("black", 3)) +
+    scale_y_continuous(name="Outcome", limits=c(1, 12)) +
+    ggtitle("IT") +
+    theme_bw() +
+    theme(legend.position = "none"),
+  ggplot(ex.df, aes(x = Time, y = ETI, color = cluster)) +
+    geom_line() +
+    scale_colour_manual(values=rep("black", 3)) +
+    scale_y_continuous(name="Outcome", limits=c(1, 12)) +
+    ggtitle("ETE") +
+    theme_bw() +
+    theme(legend.position = "none"),
+  ggplot(ex.df, aes(x = Time, y = CTI, color = cluster)) +
+    geom_line() +
+    scale_colour_manual(values=rep("black", 3)) +
+    scale_y_continuous(name="Outcome", limits=c(1, 12)) +
+    ggtitle("CTE") +
+    theme_bw() +
+    theme(legend.position = "none"),
+  nrow=1
+)
+# width: 550, height: 250
+
+# Exclude for now
+```
+
