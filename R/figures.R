@@ -44,8 +44,8 @@ colnames(simresults.df_ME)
 # Simulated OLS results
 simresults.df_OLS <- rbind(
   simresults.df %>% mutate(simresult=bias_est_OLS_pct, simresultlabel="Percent Bias (%)"),
-  simresults.df %>% mutate(simresult=precision_OLS, simresultlabel="Precision"),
-  simresults.df %>% mutate(simresult=CP_OLS, simresultlabel="CP"),
+  simresults.df %>% mutate(simresult=precision_OLS_CR3, simresultlabel="Precision"),
+  simresults.df %>% mutate(simresult=CP_OLS_CR3, simresultlabel="CP"),
   simresults.df %>% mutate(simresult=RMSE_OLS, simresultlabel="RMSE")
 )
 simresults.df_OLS$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
@@ -70,6 +70,7 @@ ggplot(simresults.df_OLS, aes(x=Estimator, y=simresult, color=Estimator, fill=Es
   labs(title="Analysis with an independence working correlation structure", x ="Estimators", y = "Simulation Results") +
   theme(legend.position = "none")
 # width: 550, height: 500
+
 # plot both together
 ggplot(
   simresults.df2, 
@@ -88,13 +89,13 @@ ggplot(
 # width: 650, height: 500
 
 # plot appendix plot (Power & MCSE)
-ggplot(simresults.df, aes(x=estimator, y=Power_ME, color=estimator, fill=estimator)) +
+ggplot(simresults.df, aes(x=Estimator, y=Power_ME, color=Estimator, fill=Estimator)) +
   geom_bar(stat="identity") +
   theme_bw() +
   facet_grid(~estimandlabel, scales = "free") +
   labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Power_ME") +
   theme(legend.position = "none")
-ggplot(simresults.df, aes(x=estimator, y=monte_carlo_se_ME, color=estimator, fill=estimator)) +
+ggplot(simresults.df, aes(x=Estimator, y=monte_carlo_se_ME, color=Estimator, fill=Estimator)) +
   geom_bar(stat="identity") +
   theme_bw() +
   facet_grid(~estimandlabel, scales = "free") +
