@@ -269,62 +269,65 @@ CTEtestscenario1 <- data.frame(
   scenario = "B",
   CTATE = mean(CTE_effect1)
 )
-CTEtestscenario2 <- data.frame(
-  CTE = c(2,3,4,5,6,7,8,9),
-  CTE_effect = CTE_effect2,
-  CTE_weight = sum(CTE_effect2 * ETATE_CTE_weights)/8,
-  scenario="C",
-  CTATE = mean(CTE_effect2)
-)
+# CTEtestscenario2 <- data.frame(
+#   CTE = c(2,3,4,5,6,7,8,9),
+#   CTE_effect = CTE_effect2,
+#   CTE_weight = sum(CTE_effect2 * ETATE_CTE_weights)/8,
+#   scenario="C",
+#   CTATE = mean(CTE_effect2)
+# )
 CTEtestscenario3 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect3,
   CTE_weight = sum(CTE_effect3 * ETATE_CTE_weights)/8,
-  scenario="D",
+  scenario="C",
   CTATE = mean(CTE_effect3)
 )
 CTEtestscenario4 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect4,
   CTE_weight = sum(CTE_effect4 * ETATE_CTE_weights)/8,
-  scenario="E",
+  scenario="D",
   CTATE = mean(CTE_effect4)
 )
 CTEtestscenario5 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect5,
   CTE_weight = sum(CTE_effect5 * ETATE_CTE_weights)/8,
-  scenario="F",
+  scenario="E",
   CTATE = mean(CTE_effect5)
 )
 CTEtestscenario6 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect6,
   CTE_weight = sum(CTE_effect6 * ETATE_CTE_weights)/8,
-  scenario="G",
+  scenario="F",
   CTATE = mean(CTE_effect6)
 )
 
 CTEtestscenario <- rbind(
   CTEtestscenario0,
   CTEtestscenario1,
-  CTEtestscenario2,
+  # CTEtestscenario2,
   CTEtestscenario3,
   CTEtestscenario4,
   CTEtestscenario5,
   CTEtestscenario6
 )
 
+colors <- c("CTE" = "darkred", "True CTATE"="#F8766D", "Est. ETATE" = "#00BA38")
 ggplot(CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
-  geom_point(fill="darkred", color="darkred") +
-  geom_line(color="darkred") +
+  geom_point(aes(color="CTE"),fill="darkred") +
+  geom_line(aes(color="CTE")) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  geom_hline(aes(yintercept=CTE_weight), linetype="solid", color = "#00BA38", lwd=0.75) +
-  geom_hline(aes(yintercept=CTATE), linetype="solid", color = "#F8766D", lwd=0.75) +
+  geom_hline(aes(yintercept=CTE_weight, color = "Est. ETATE"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=CTATE, color = "True CTATE"), linetype="solid", lwd=0.75) +
   theme_bw() +
   facet_grid(~ scenario) +
-  labs(title="Scenarios with different CTE as analyzed by an ETATE estimator", x ="Calendar time (j)", y = "CTE value")
-# width 600, height 220
+  labs(title="Scenarios with different CTE as analyzed by an ETATE estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+  scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. ETATE")) +
+  theme(legend.position="bottom")
+# width 600, height 250
 ```
 
 # CTATE estimator weights
@@ -593,39 +596,39 @@ ETEtestscenario1 <- data.frame(
   scenario = "B",
   ETATE = mean(ETE_effect1)
 )
-ETEtestscenario2 <- data.frame(
-  ETE = c(1,2,3,4,5,6,7,8),
-  ETE_effect = ETE_effect2,
-  ETE_weight = sum(ETE_effect2 * CTATE_ETE_weights)/8,
-  scenario="C",
-  ETATE = mean(ETE_effect2)
-)
+# ETEtestscenario2 <- data.frame(
+#   ETE = c(1,2,3,4,5,6,7,8),
+#   ETE_effect = ETE_effect2,
+#   ETE_weight = sum(ETE_effect2 * CTATE_ETE_weights)/8,
+#   scenario="C",
+#   ETATE = mean(ETE_effect2)
+# )
 ETEtestscenario3 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect3,
   ETE_weight = sum(ETE_effect3 * CTATE_ETE_weights)/8,
-  scenario="D",
+  scenario="C",
   ETATE = mean(ETE_effect3)
 )
 ETEtestscenario4 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect4,
   ETE_weight = sum(ETE_effect4 * CTATE_ETE_weights)/8,
-  scenario="E",
+  scenario="D",
   ETATE = mean(ETE_effect4)
 )
 ETEtestscenario5 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect5,
   ETE_weight = sum(ETE_effect5 * CTATE_ETE_weights)/8,
-  scenario="F",
+  scenario="E",
   ETATE = mean(ETE_effect5)
 )
 ETEtestscenario6 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect6,
   ETE_weight = sum(ETE_effect6 * CTATE_ETE_weights)/8,
-  scenario="G",
+  scenario="F",
   ETATE = mean(ETE_effect6)
 )
 
@@ -633,25 +636,28 @@ ETEtestscenario6 <- data.frame(
 ETEtestscenario <- rbind(
   ETEtestscenario0,
   ETEtestscenario1,
-  ETEtestscenario2,
+  # ETEtestscenario2,
   ETEtestscenario3,
   ETEtestscenario4,
   ETEtestscenario5,
   ETEtestscenario6
 )
 
+colors <- c("ETE" = "darkgreen", "True ETATE" = "#00BA38", "Est. CTATE"="#F8766D")
 ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
-  geom_point(fill="darkgreen", color="darkgreen") +
-  geom_line(color="darkgreen") +
+  geom_point(aes(color="ETE"), fill="darkgreen") +
+  geom_line(aes(color="ETE")) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  geom_hline(aes(yintercept=ETE_weight), linetype="solid", color = "#F8766D", lwd=0.75) +
-  geom_hline(aes(yintercept=ETATE), linetype="solid", color = "#00BA38", lwd=0.75) +
+  geom_hline(aes(yintercept=ETE_weight, color = "Est. CTATE"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=ETATE, color = "True ETATE"), linetype="solid", lwd=0.75) +
   theme_bw() +
   facet_grid(~ scenario) +
-  labs(title="Scenarios with different ETE as analyzed by a CTATE estimator", x ="Exposure time (s)", y = "ETE value") +
-  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1))
+  labs(title="Scenarios with different ETE as analyzed by a CTATE estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. CTATE")) +
+  theme(legend.position="bottom")
 
-# width 600, height 220
+# width 600, height 300
 ```
 
 # IT estimator weights
@@ -915,39 +921,39 @@ ETEtestscenario1 <- data.frame(
   scenario = "B",
   ETATE = mean(ETE_effect1)
 )
-ETEtestscenario2 <- data.frame(
-  ETE = c(1,2,3,4,5,6,7,8,9),
-  ETE_effect = ETE_effect2,
-  ETE_weight = sum(ETE_effect2 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="C",
-  ETATE = mean(ETE_effect2)
-)
+# ETEtestscenario2 <- data.frame(
+#   ETE = c(1,2,3,4,5,6,7,8,9),
+#   ETE_effect = ETE_effect2,
+#   ETE_weight = sum(ETE_effect2 * IT_ETE_weights)/length(IT_ETE_weights),
+#   scenario="C",
+#   ETATE = mean(ETE_effect2)
+# )
 ETEtestscenario3 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect3,
   ETE_weight = sum(ETE_effect3 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="D",
+  scenario="C",
   ETATE = mean(ETE_effect3)
 )
 ETEtestscenario4 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect4,
   ETE_weight = sum(ETE_effect4 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="E",
+  scenario="D",
   ETATE = mean(ETE_effect4)
 )
 ETEtestscenario5 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect5,
   ETE_weight = sum(ETE_effect5 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="F",
+  scenario="E",
   ETATE = mean(ETE_effect5)
 )
 ETEtestscenario6 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect6,
   ETE_weight = sum(ETE_effect6 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="G",
+  scenario="F",
   ETATE = mean(ETE_effect6)
 )
 
@@ -955,24 +961,27 @@ ETEtestscenario6 <- data.frame(
 ETEtestscenario <- rbind(
   ETEtestscenario0,
   ETEtestscenario1,
-  ETEtestscenario2,
+  # ETEtestscenario2,
   ETEtestscenario3,
   ETEtestscenario4,
   ETEtestscenario5,
   ETEtestscenario6
 )
 
+colors <- c("ETE" = "darkgreen", "True ETATE" = "#00BA38", "Est. IT"="#619CFF")
 ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
-  geom_point(fill="darkgreen", color="darkgreen") +
-  geom_line(color="darkgreen") +
+  geom_point(aes(color="ETE"), fill="darkgreen") +
+  geom_line(aes(color="ETE")) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  geom_hline(aes(yintercept=ETE_weight), linetype="solid", color = "#619CFF", lwd=0.75) +
-  geom_hline(aes(yintercept=ETATE), linetype="solid", color = "#00BA38", lwd=0.75) +
+  geom_hline(aes(yintercept=ETE_weight, color = "Est. IT"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=ETATE, color = "True ETATE"), linetype="solid", lwd=0.75) +
   theme_bw() +
   facet_grid(~ scenario) +
-  labs(title="Scenarios with different ETE as analyzed by an IT estimator", x ="Exposure time (s)", y = "ETE value") +
-  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1))
-# width 600, height 220
+  labs(title="Scenarios with different ETE as analyzed by an IT estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+  scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. IT")) + 
+  theme(legend.position="bottom")
+# width 600, height 300
 ```
 
 ```{r * Generate IT -> CTI figures}
@@ -1061,63 +1070,65 @@ CTEtestscenario1 <- data.frame(
   scenario = "B",
   CTATE = mean(CTE_effect1)
 )
-CTEtestscenario2 <- data.frame(
-  CTE = c(2,3,4,5,6,7,8,9),
-  CTE_effect = CTE_effect2,
-  CTE_weight = sum(CTE_effect2 * IT_CTE_weights)/8,
-  scenario="C",
-  CTATE = mean(CTE_effect2)
-)
+# CTEtestscenario2 <- data.frame(
+#   CTE = c(2,3,4,5,6,7,8,9),
+#   CTE_effect = CTE_effect2,
+#   CTE_weight = sum(CTE_effect2 * IT_CTE_weights)/8,
+#   scenario="C",
+#   CTATE = mean(CTE_effect2)
+# )
 CTEtestscenario3 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect3,
   CTE_weight = sum(CTE_effect3 * IT_CTE_weights)/8,
-  scenario="D",
+  scenario="C",
   CTATE = mean(CTE_effect3)
 )
 CTEtestscenario4 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect4,
   CTE_weight = sum(CTE_effect4 * IT_CTE_weights)/8,
-  scenario="E",
+  scenario="D",
   CTATE = mean(CTE_effect4)
 )
 CTEtestscenario5 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect5,
   CTE_weight = sum(CTE_effect5 * IT_CTE_weights)/8,
-  scenario="F",
+  scenario="E",
   CTATE = mean(CTE_effect5)
 )
 CTEtestscenario6 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect6,
   CTE_weight = sum(CTE_effect6 * IT_CTE_weights)/8,
-  scenario="G",
+  scenario="F",
   CTATE = mean(CTE_effect6)
 )
 
 IT_CTEtestscenario <- rbind(
   CTEtestscenario0,
   CTEtestscenario1,
-  CTEtestscenario2,
+  # CTEtestscenario2,
   CTEtestscenario3,
   CTEtestscenario4,
   CTEtestscenario5,
   CTEtestscenario6
 )
 
+colors <- c("CTE" = "darkred", "True CTATE"="#F8766D", "Est. IT" = "#619CFF")
 ggplot(IT_CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
-  geom_point(fill="darkred", color="darkred") +
-  geom_line(color="darkred") +
+  geom_point(aes(color="CTE"), fill="darkred") +
+  geom_line(aes(color="CTE")) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  geom_hline(aes(yintercept=CTE_weight), linetype="solid", color = "#619CFF", lwd=0.75) +
-  geom_hline(aes(yintercept=CTATE), linetype="solid", color = "#F8766D", lwd=0.75) +
+  geom_hline(aes(yintercept=CTE_weight, color="Est. IT"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=CTATE, color="True CTATE"), linetype="solid", lwd=0.75) +
   theme_bw() +
   facet_grid(~ scenario) +
-  labs(title="Scenarios with different CTE as analyzed by an IT estimator", x ="Calendar time (j)", y = "CTE value")
-
-# width 600, height 220
+  labs(title="Scenarios with different CTE as analyzed by an IT estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+    scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. IT")) +
+    theme(legend.position="bottom")
+# width 600, height 300
 ```
 
 ```{r CTATE misleading scenarios}

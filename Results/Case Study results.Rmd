@@ -43,6 +43,8 @@ Haines$cluster <- Haines$index_ward
 ```
 
 ```{r * Haines analysis w/ Exchangeable working corr}
+library(clubSandwich)
+
 # Haines outcome of interest
 hist(Haines$value)
 hist(log(Haines$acute_los))
@@ -133,19 +135,46 @@ Haines1_new$CTI
 
 # # Mixed Effects
 modelIT <- lme4::lmer(value~ tx.var + period + (1|cluster_new), data = Haines1_new)
-modelIT
+modelIT %>% summary() # SE = 0.03050
 modelETI <- lme4::lmer(value~ TOI + period + (1|cluster_new), data = Haines1_new)
 modelETI
 modelCTI <- lme4::lmer(value~ CTI + period + (1|cluster_new), data = filter(Haines1_new, period != 7))
 modelCTI
+# IT_RVE <- clubSandwich::vcovCR(modelIT, cluster = Haines1_new$cluster_new, type = "CR3") # var = 0.0038294428
+# ETI_RVE <- clubSandwich::vcovCR(modelETI, cluster = Haines1_new$cluster_new, type = "CR3")
+# CTI_RVE <- clubSandwich::vcovCR(modelCTI, cluster = filter(Haines1_new, period != 7)$cluster_new, type = "CR3")
 
-# # exchangeable
+# # [5/5/2024] try with NEX
+# modelIT_NEX <- lme4::lmer(value~ tx.var + period + (1|cluster_new) + (1|cluster_new:period), data = Haines1_new)
+# modelIT_NEX %>% summary()
+
+# # independence correlation structure
 modelIT_OLS <- lm(value~ tx.var + period, data = Haines1_new)
 modelIT_OLS
 modelETI_OLS <- lm(value~ TOI + period, data = Haines1_new)
 modelETI_OLS
 modelCTI_OLS <- lm(value~ CTI + period, data = filter(Haines1_new, period != 7))
 modelCTI_OLS
+# heteroskedasticity robust standard errors
+# IT_OLS_RVE_CR0 <- sandwich::vcovHC(modelIT_OLS, type = "HC3") # var = 5.387375e-04 # even lower than normal cluster robust SE's
+
+# cluster robust standard errors (takes a while to run)
+# CR2
+IT_OLS_RVE_CR2 <- clubSandwich::vcovCR(modelIT_OLS, cluster = Haines1_new$cluster_new, type = "CR2") # var = 0.042757457  
+ETI_OLS_RVE_CR2 <- clubSandwich::vcovCR(modelETI_OLS, cluster = Haines1_new$cluster_new, type = "CR2")
+CTI_OLS_RVE_CR2 <- clubSandwich::vcovCR(modelCTI_OLS, cluster = filter(Haines1_new, period != 7)$cluster_new, type = "CR2")
+# CR3
+IT_OLS_RVE_CR3 <- clubSandwich::vcovCR(modelIT_OLS, cluster = Haines1_new$cluster_new, type = "CR3") # var = 0.042757457  
+ETI_OLS_RVE_CR3 <- clubSandwich::vcovCR(modelETI_OLS, cluster = Haines1_new$cluster_new, type = "CR3")
+CTI_OLS_RVE_CR3 <- clubSandwich::vcovCR(modelCTI_OLS, cluster = filter(Haines1_new, period != 7)$cluster_new, type = "CR3")
+# Huge SE's - similar to what was reported in Abadie et al.
+# takes forever to run
+  # IT_OLS_RVE_CR2 <- 0.0326825247
+  # ETI_OLS_RVE_CR2 <- cbind(c(0.0218325117, 0.0255299747, 0.0320455463, 0.0433372029,  0.0398248170,  0.0754349684), c(0.0255299747, 0.0315406100, 0.0367590475, 0.0504004037, 0.0439923626, 0.0852276793), c(0.0320455463, 0.0367590475, 0.0492787529, 0.0634892359, 0.0615508932, 0.1134739919), c(0.0433372029, 0.0504004037, 0.0634892359, 0.0876785223, 0.0802593889, 0.1516697928), c(0.0398248170, 0.0439923626, 0.0615508932, 0.0802593889, 0.0826061767, 0.1508699909), c(0.0754349684, 0.0852276793, 0.1134739919, 0.1516697928, 0.1508699909, 0.2995200281))
+  # CTI_OLS_RVE_CR2 <- cbind(c(0.207368103, 0.068586689, 0.045625832,  0.036825141,  0.0098124102), c(0.068586689,  0.040345408, 0.024490889,  0.015486826,  0.0061917719), c(0.045625832,  0.024490889 , 0.032972851 , 0.024047290 , 0.0097025215), c(0.036825141,  0.015486826, 0.024047290,  0.032719236,  0.0039097319), c(0.009812410,  0.006191772,  0.009702521,  0.003909732,  0.0067438872))
+  # IT_OLS_RVE_CR3 <- 0.042757457  
+  # ETI_OLS_RVE_CR3 <- cbind(c(0.0289016063,  0.0341082720,  0.042531928,  0.0581972470,  0.0539140422,  0.114554683), c(0.0341082720,  0.0423742728,  0.049292271,  0.0683027617,  0.0604148355,  0.130667452), c(0.0425319277,  0.0492922714,  0.065410664,  0.0855018718,  0.0833832508,  0.172748004), c(0.0581972470,  0.0683027617,  0.085501872,  0.1191489433,  0.1100218259,  0.233351057), c(0.0539140422,  0.0604148355,  0.083383251,  0.1100218259,  0.1135303090,  0.234380419), c(0.1145546830,  0.1306674519,  0.172748004,  0.2333510569,  0.2343804186,  0.523730547))
+  # CTI_OLS_RVE_CR3 <- cbind(c(0.481253029,  0.121576173,  0.077142885,  0.061419295,  0.0161824178), c(0.121576173,  0.054062360,  0.032158570,  0.019906860,  0.0077312463), c(0.077142885,  0.032158570,  0.040625578,  0.027962446,  0.0112566541), c(0.061419295,  0.019906860,  0.027962446,  0.041558577,  0.0040703024), c(0.016182418,  0.007731246,  0.011256654,  0.004070302,  0.0075550314))
 
 IT.df <- data.frame(
   "Estimand" = "IT",
@@ -155,15 +184,24 @@ IT.df <- data.frame(
   "IT_se" = summary(modelIT)$coefficients[grepl("tx.var",rownames(summary(modelIT)$coefficients)), "Std. Error"],
   
   "IT_est_OLS" = summary(modelIT_OLS)$coefficients[grepl("tx.var",rownames(summary(modelIT_OLS)$coefficients)), "Estimate"],
-  "IT_se_OLS" = summary(modelIT_OLS)$coefficients[grepl("tx.var",rownames(summary(modelIT_OLS)$coefficients)), "Std. Error"]
+  "IT_se_OLS" = summary(modelIT_OLS)$coefficients[grepl("tx.var",rownames(summary(modelIT_OLS)$coefficients)), "Std. Error"],
+  "IT_se_OLS_CR2" = sqrt(IT_OLS_RVE_CR2[rownames(IT_OLS_RVE_CR2)=="tx.var",colnames(IT_OLS_RVE_CR2)=="tx.var"]),
+  "IT_se_OLS_CR3" = sqrt(IT_OLS_RVE_CR3[rownames(IT_OLS_RVE_CR3)=="tx.var",colnames(IT_OLS_RVE_CR3)=="tx.var"])
 )
 IT.df$CI_95_L <- IT.df$IT_est - 1.96*IT.df$IT_se
 IT.df$CI_95_H <- IT.df$IT_est + 1.96*IT.df$IT_se
 IT.df$CI_95_L_OLS <- IT.df$IT_est_OLS - 1.96*IT.df$IT_se_OLS
 IT.df$CI_95_H_OLS <- IT.df$IT_est_OLS + 1.96*IT.df$IT_se_OLS
-IT.df <- rbind(IT.df,c("IT",0,1,0,0,0,0,0,0,0,0))
+# CR2
+IT.df$CI_95_L_OLS_CR2 <- IT.df$IT_est_OLS - 1.96*IT.df$IT_se_OLS_CR2
+IT.df$CI_95_H_OLS_CR2 <- IT.df$IT_est_OLS + 1.96*IT.df$IT_se_OLS_CR2
+# CR3
+IT.df$CI_95_L_OLS_CR3 <- IT.df$IT_est_OLS - 1.96*IT.df$IT_se_OLS_CR3
+IT.df$CI_95_H_OLS_CR3 <- IT.df$IT_est_OLS + 1.96*IT.df$IT_se_OLS_CR3
+
+IT.df <- rbind(IT.df,c("IT",0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 IT.df[c("IT_est","IT_se","CI_95_L","CI_95_H")] <- lapply(IT.df[c("IT_est","IT_se","CI_95_L","CI_95_H")], as.numeric)
-IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS", "CI_95_L_OLS_CR2", "CI_95_H_OLS_CR2", "CI_95_L_OLS_CR3", "CI_95_H_OLS_CR3")] <- lapply(IT.df[c("IT_est_OLS","IT_se_OLS","CI_95_L_OLS","CI_95_H_OLS", "CI_95_L_OLS_CR2", "CI_95_H_OLS_CR2", "CI_95_L_OLS_CR3", "CI_95_H_OLS_CR3")], as.numeric)
 
 IT.df
 
@@ -177,17 +215,28 @@ ETI.df <- data.frame(
   
   "ETE_est_OLS" = summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Estimate"],
   "ETE_se_OLS" = summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Std. Error"],
+  "ETE_se_OLS_CR2" = sqrt(diag(ETI_OLS_RVE_CR2[grepl("TOI",rownames(ETI_OLS_RVE_CR2)),grepl("TOI",colnames(ETI_OLS_RVE_CR2))])),
+  "ETE_se_OLS_CR3" = sqrt(diag(ETI_OLS_RVE_CR3[grepl("TOI",rownames(ETI_OLS_RVE_CR3)),grepl("TOI",colnames(ETI_OLS_RVE_CR3))])),
+  
   "ETATE_est_OLS" = sum(summary(modelETI_OLS)$coefficients[grepl("TOI",rownames(summary(modelETI_OLS)$coefficients)), "Estimate"])/6,
-  "ETATE_se_OLS" =   sqrt(sum(vcov(modelETI_OLS)[2:7, 2:7])/36)
+  "ETATE_se_OLS" =   sqrt(sum(vcov(modelETI_OLS)[2:7, 2:7])/36),
+  "ETATE_se_OLS_CR2" =   sqrt(sum(ETI_OLS_RVE_CR2[2:7, 2:7])/36),
+  "ETATE_se_OLS_CR3" =   sqrt(sum(ETI_OLS_RVE_CR3[2:7, 2:7])/36)
 )
 ETI.df$CI_95_L <- ETI.df$ETE_est - 1.96*ETI.df$ETE_se
 ETI.df$CI_95_H <- ETI.df$ETE_est + 1.96*ETI.df$ETE_se
 ETI.df$CI_95_L_OLS <- ETI.df$ETE_est_OLS - 1.96*ETI.df$ETE_se_OLS
 ETI.df$CI_95_H_OLS <- ETI.df$ETE_est_OLS + 1.96*ETI.df$ETE_se_OLS
+# CR2
+ETI.df$CI_95_L_OLS_CR2 <- ETI.df$ETE_est_OLS - 1.96*ETI.df$ETE_se_OLS_CR2
+ETI.df$CI_95_H_OLS_CR2 <- ETI.df$ETE_est_OLS + 1.96*ETI.df$ETE_se_OLS_CR2
+# CR3
+ETI.df$CI_95_L_OLS_CR3 <- ETI.df$ETE_est_OLS - 1.96*ETI.df$ETE_se_OLS_CR3
+ETI.df$CI_95_H_OLS_CR3 <- ETI.df$ETE_est_OLS + 1.96*ETI.df$ETE_se_OLS_CR3
 
-ETI.df <- rbind(ETI.df,c("ETE",0,0,0,0,0,0,0,0,0,0,0,0,0))
+ETI.df <- rbind(ETI.df,c("ETE",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 ETI.df[c("ETE_est","ETE_se","ETATE_est","ETATE_se","CI_95_L","CI_95_H")] <- lapply(ETI.df[c("ETE_est","ETE_se","ETATE_est","ETATE_se","CI_95_L","CI_95_H")], as.numeric)
-ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","ETATE_se_OLS_CR2","ETATE_se_OLS_CR3","CI_95_L_OLS","CI_95_H_OLS","CI_95_L_OLS_CR2","CI_95_H_OLS_CR2","CI_95_L_OLS_CR3","CI_95_H_OLS_CR3")] <- lapply(ETI.df[c("ETE_est_OLS","ETE_se_OLS","ETATE_est_OLS","ETATE_se_OLS","ETATE_se_OLS_CR2","ETATE_se_OLS_CR3","CI_95_L_OLS","CI_95_H_OLS","CI_95_L_OLS_CR2","CI_95_H_OLS_CR2","CI_95_L_OLS_CR3","CI_95_H_OLS_CR3")], as.numeric)
 
 ETI.df
 
@@ -202,18 +251,28 @@ CTI.df <- data.frame(
   
   "CTE_est_OLS" = summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Estimate"],
   "CTE_se_OLS" = summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Std. Error"],
+  "CTE_se_OLS_CR2" = sqrt(diag(CTI_OLS_RVE_CR2[grepl("CTI",rownames(CTI_OLS_RVE_CR2)),grepl("CTI",colnames(CTI_OLS_RVE_CR2))])),
+  "CTE_se_OLS_CR3" = sqrt(diag(CTI_OLS_RVE_CR3[grepl("CTI",rownames(CTI_OLS_RVE_CR3)),grepl("CTI",colnames(CTI_OLS_RVE_CR3))])),
+ 
   "CTATE_est_OLS" = sum(summary(modelCTI_OLS)$coefficients[grepl("CTI",rownames(summary(modelCTI_OLS)$coefficients)), "Estimate"])/5,
-  "CTATE_se_OLS" =   sqrt(sum(vcov(modelCTI_OLS)[2:6, 2:6])/25)
-  
+  "CTATE_se_OLS" =   sqrt(sum(vcov(modelCTI_OLS)[2:6, 2:6])/25),
+  "CTATE_se_OLS_CR2" =   sqrt(sum(CTI_OLS_RVE_CR2[2:6, 2:6])/25),
+  "CTATE_se_OLS_CR3" =   sqrt(sum(CTI_OLS_RVE_CR3[2:6, 2:6])/25)
 )
 CTI.df$CI_95_L <- CTI.df$CTE_est - 1.96*CTI.df$CTE_se
 CTI.df$CI_95_H <- CTI.df$CTE_est + 1.96*CTI.df$CTE_se
 CTI.df$CI_95_L_OLS <- CTI.df$CTE_est_OLS - 1.96*CTI.df$CTE_se_OLS
 CTI.df$CI_95_H_OLS <- CTI.df$CTE_est_OLS + 1.96*CTI.df$CTE_se_OLS
+# CR2
+CTI.df$CI_95_L_OLS_CR2 <- CTI.df$CTE_est_OLS - 1.96*CTI.df$CTE_se_OLS_CR2
+CTI.df$CI_95_H_OLS_CR2 <- CTI.df$CTE_est_OLS + 1.96*CTI.df$CTE_se_OLS_CR2
+# CR3
+CTI.df$CI_95_L_OLS_CR3 <- CTI.df$CTE_est_OLS - 1.96*CTI.df$CTE_se_OLS_CR3
+CTI.df$CI_95_H_OLS_CR3 <- CTI.df$CTE_est_OLS + 1.96*CTI.df$CTE_se_OLS_CR3
 
-CTI.df <- rbind(CTI.df,c("CTE",1,0,0,0,0,0,0,0,0,0,0,0,0))
+CTI.df <- rbind(CTI.df,c("CTE",1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0))
 CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")] <- lapply(CTI.df[c("CTE_est","CTE_se","CTATE_est","CTATE_se","CI_95_L","CI_95_H")], as.numeric)
-CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")] <- lapply(CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CI_95_L_OLS","CI_95_H_OLS")], as.numeric)
+CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CTATE_se_OLS_CR2","CTATE_se_OLS_CR3","CI_95_L_OLS","CI_95_H_OLS","CI_95_L_OLS_CR2","CI_95_H_OLS_CR2","CI_95_L_OLS_CR3","CI_95_H_OLS_CR3")] <- lapply(CTI.df[c("CTE_est_OLS","CTE_se_OLS","CTATE_est_OLS","CTATE_se_OLS","CTATE_se_OLS_CR2","CTATE_se_OLS_CR3","CI_95_L_OLS","CI_95_H_OLS","CI_95_L_OLS_CR2","CI_95_H_OLS_CR2","CI_95_L_OLS_CR3","CI_95_H_OLS_CR3")], as.numeric)
 
 # Add TATE confidence intervals
 # ETATE CI
@@ -221,7 +280,13 @@ ETI.df$ETATE_CI_95_L <- ETI.df$ETATE_est - 1.96*ETI.df$ETATE_se
 ETI.df$ETATE_CI_95_H <- ETI.df$ETATE_est + 1.96*ETI.df$ETATE_se
 ETI.df$ETATE_CI_95_L_OLS <- ETI.df$ETATE_est_OLS - 1.96*ETI.df$ETATE_se_OLS
 ETI.df$ETATE_CI_95_H_OLS <- ETI.df$ETATE_est_OLS + 1.96*ETI.df$ETATE_se_OLS
-ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS")] <- lapply(ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS")], as.numeric)
+# CR2
+ETI.df$ETATE_CI_95_L_OLS_CR2 <- ETI.df$ETATE_est_OLS - 1.96*ETI.df$ETATE_se_OLS_CR2
+ETI.df$ETATE_CI_95_H_OLS_CR2 <- ETI.df$ETATE_est_OLS + 1.96*ETI.df$ETATE_se_OLS_CR2
+# CR3
+ETI.df$ETATE_CI_95_L_OLS_CR3 <- ETI.df$ETATE_est_OLS - 1.96*ETI.df$ETATE_se_OLS_CR3
+ETI.df$ETATE_CI_95_H_OLS_CR3 <- ETI.df$ETATE_est_OLS + 1.96*ETI.df$ETATE_se_OLS_CR3
+ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS","ETATE_CI_95_L_OLS_CR2","ETATE_CI_95_H_OLS_CR2","ETATE_CI_95_L_OLS_CR3","ETATE_CI_95_H_OLS_CR3")] <- lapply(ETI.df[c("ETATE_CI_95_L","ETATE_CI_95_H","ETATE_CI_95_L_OLS","ETATE_CI_95_H_OLS","ETATE_CI_95_L_OLS_CR2","ETATE_CI_95_H_OLS_CR2","ETATE_CI_95_L_OLS_CR3","ETATE_CI_95_H_OLS_CR3")], as.numeric)
 
 
 # CTATE CI
@@ -229,7 +294,13 @@ CTI.df$CTATE_CI_95_L <- CTI.df$CTATE_est - 1.96*CTI.df$CTATE_se
 CTI.df$CTATE_CI_95_H <- CTI.df$CTATE_est + 1.96*CTI.df$CTATE_se
 CTI.df$CTATE_CI_95_L_OLS <- CTI.df$CTATE_est_OLS - 1.96*CTI.df$CTATE_se_OLS
 CTI.df$CTATE_CI_95_H_OLS <- CTI.df$CTATE_est_OLS + 1.96*CTI.df$CTATE_se_OLS
-CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS")] <- lapply(CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS")], as.numeric)
+# CR2
+CTI.df$CTATE_CI_95_L_OLS_CR2 <- CTI.df$CTATE_est_OLS - 1.96*CTI.df$CTATE_se_OLS_CR2
+CTI.df$CTATE_CI_95_H_OLS_CR2 <- CTI.df$CTATE_est_OLS + 1.96*CTI.df$CTATE_se_OLS_CR2
+# CR3
+CTI.df$CTATE_CI_95_L_OLS_CR3 <- CTI.df$CTATE_est_OLS - 1.96*CTI.df$CTATE_se_OLS_CR3
+CTI.df$CTATE_CI_95_H_OLS_CR3 <- CTI.df$CTATE_est_OLS + 1.96*CTI.df$CTATE_se_OLS_CR3
+CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS","CTATE_CI_95_L_OLS_CR2","CTATE_CI_95_H_OLS_CR2","CTATE_CI_95_L_OLS_CR3","CTATE_CI_95_H_OLS_CR3")] <- lapply(CTI.df[c("CTATE_CI_95_L","CTATE_CI_95_H","CTATE_CI_95_L_OLS","CTATE_CI_95_H_OLS","CTATE_CI_95_L_OLS_CR2","CTATE_CI_95_H_OLS_CR2","CTATE_CI_95_L_OLS_CR3","CTATE_CI_95_H_OLS_CR3")], as.numeric)
 ```
 
 ```{r plot exchangeable working corr}
@@ -396,19 +467,20 @@ library(dplyr)
 # )
 
 exchangeable.plots <- cowplot::plot_grid(
-  ggdraw() + draw_label("Exchangeable working correlation", fontface='bold', size=12),
+  ggdraw() + draw_label("Exchangeable correlation structure", fontface='bold', size=12),
   cowplot::plot_grid(
   IT.df %>% 
     ggplot(aes(x = ETE, y = IT_est,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
     # IT
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est)), colour="#619CFF") +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est)), colour="#619CFF", linewidth=1) +
     # IT CI L
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L)), colour="#619CFF", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L)), colour="#619CFF", linetype = "dashed", linewidth=1) +
     # IT CI H
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H)), colour="#619CFF", linetype = "dashed") +
-    scale_y_continuous(name="IT estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="IT estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="IT estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -417,12 +489,13 @@ exchangeable.plots <- cowplot::plot_grid(
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
     # ETATE
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="#00BA38") +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est)), colour="#00BA38", linewidth=1) +
     # ETATE CI L
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L)), colour="#00BA38", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L)), colour="#00BA38", linetype = "dashed", linewidth=1) +
     # ETATE CI H
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H)), colour="#00BA38", linetype = "dashed") +
-    scale_y_continuous(name="ETE estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="ETE estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="ETE estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -431,12 +504,13 @@ exchangeable.plots <- cowplot::plot_grid(
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L, ymax = CI_95_H), alpha = 0.1) +
     # CTATE
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="#F8766D") +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est)), colour="#F8766D", linewidth=1) +
     # CTATE CI L
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L)), colour="#F8766D", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L)), colour="#F8766D", linetype = "dashed", linewidth=1) +
     # CTATE CI H
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H)), colour="#F8766D", linetype = "dashed") +
-    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="CTE estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Calendar time (j)") +
     theme(plot.title = element_text(size = 10)),
@@ -445,20 +519,22 @@ exchangeable.plots <- cowplot::plot_grid(
   ncol=1, rel_heights=c(0.1, 1)
 )
 exchangeable.plots
+
 independence.plots <- cowplot::plot_grid(
-  ggdraw() + draw_label("Independence working correlation", fontface='bold', size=12),
+  ggdraw() + draw_label("Independence correlation structure (model-based)", fontface='bold', size=12),
   cowplot::plot_grid(
   IT.df %>% 
     ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
     # IT
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est_OLS)), colour="#619CFF") +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est_OLS)), colour="#619CFF", linewidth=1) +
     # IT CI L
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS)), colour="#619CFF", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS)), colour="#619CFF", linetype = "dashed", linewidth=1) +
     # IT CI H
-    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS)), colour="#619CFF", linetype = "dashed") +
-    scale_y_continuous(name="IT estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+        scale_y_continuous(name="IT estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="IT estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -467,12 +543,13 @@ independence.plots <- cowplot::plot_grid(
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
     # ETATE
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="#00BA38") +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="#00BA38", linewidth=1) +
     # ETATE CI L
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS)), colour="#00BA38", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS)), colour="#00BA38", linetype = "dashed", linewidth=1) +
     # ETATE CI H
-    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS)), colour="#00BA38", linetype = "dashed") +
-    scale_y_continuous(name="ETE estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="ETE estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="ETE estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Exposure time (s)") +
     theme(plot.title = element_text(size = 10)),
@@ -481,12 +558,13 @@ independence.plots <- cowplot::plot_grid(
     geom_line() + 
     geom_ribbon(aes(ymin = CI_95_L_OLS, ymax = CI_95_H_OLS), alpha = 0.1) +
     # CTATE
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="#F8766D") +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="#F8766D", linewidth=1) +
      # CTATE CI L
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS)), colour="#F8766D", linetype = "dashed") +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS)), colour="#F8766D", linetype = "dashed", linewidth=1) +
     # CTATE CI H
-    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS)), colour="#F8766D", linetype = "dashed") +
-    scale_y_continuous(name="CTE estimate", limits=c(-0.4, 0.5)) +
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="CTE estimate", limits=c(-0.5, 0.5)) +
+    # scale_y_continuous(name="CTE estimate", limits=c(-2, 2)) +
     theme_bw() +
     labs(x ="Calendar time (j)") +
     theme(plot.title = element_text(size = 10)),
@@ -495,10 +573,115 @@ independence.plots <- cowplot::plot_grid(
   ncol=1, rel_heights=c(0.1, 1)
 )
 independence.plots
+
+independence.plots_CR2 <- cowplot::plot_grid(
+  ggdraw() + draw_label("Independence correlation structure (CR2)", fontface='bold', size=12),
+  cowplot::plot_grid(
+  IT.df %>% 
+    ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR2, ymax = CI_95_H_OLS_CR2), alpha = 0.1) +
+    # IT
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est_OLS)), colour="#619CFF", linewidth=1) +
+    # IT CI L
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS_CR2), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS_CR2)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+    # IT CI H
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS_CR2), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS_CR2)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="IT estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  ETI.df %>% 
+    ggplot(aes(x = ETE, y = ETE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR2, ymax = CI_95_H_OLS_CR2), alpha = 0.1) +
+    # ETATE
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="#00BA38", linewidth=1) +
+    # ETATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS_CR2), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS_CR2)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    # ETATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS_CR2), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS_CR2)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="ETE estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  CTI.df %>% 
+    ggplot(aes(x = CTE, y = CTE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR2, ymax = CI_95_H_OLS_CR2), alpha = 0.1) +
+    # CTATE
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="#F8766D", linewidth=1) +
+     # CTATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS_CR2), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS_CR2)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    # CTATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS_CR2), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS_CR2)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="CTE estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Calendar time (j)") +
+    theme(plot.title = element_text(size = 10)),
+  nrow=1
+  ),
+  ncol=1, rel_heights=c(0.1, 1)
+)
+independence.plots_CR2
+
+independence.plots_CR3 <- cowplot::plot_grid(
+  ggdraw() + draw_label("Independence correlation structure (CR3)", fontface='bold', size=12),
+  cowplot::plot_grid(
+  IT.df %>% 
+    ggplot(aes(x = ETE, y = IT_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR3, ymax = CI_95_H_OLS_CR3), alpha = 0.1) +
+    # IT
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$IT_est_OLS), xend = 7, yend = unique(filter(IT.df, ETE!=0)$IT_est_OLS)), colour="#619CFF", linewidth=1) +
+    # IT CI L
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS_CR3), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_L_OLS_CR3)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+    # IT CI H
+    geom_segment(aes(x = 2, y = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS_CR3), xend = 7, yend = unique(filter(IT.df, ETE!=0)$CI_95_H_OLS_CR3)), colour="#619CFF", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="IT estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  ETI.df %>% 
+    ggplot(aes(x = ETE, y = ETE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR3, ymax = CI_95_H_OLS_CR3), alpha = 0.1) +
+    # ETATE
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_est_OLS)), colour="#00BA38", linewidth=1) +
+    # ETATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS_CR3), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_L_OLS_CR3)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    # ETATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS_CR3), xend = 7, yend = unique(filter(ETI.df, ETE!=0)$ETATE_CI_95_H_OLS_CR3)), colour="#00BA38", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="ETE estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Exposure time (s)") +
+    theme(plot.title = element_text(size = 10)),
+  CTI.df %>% 
+    ggplot(aes(x = CTE, y = CTE_est_OLS,  group=1)) + 
+    geom_line() + 
+    geom_ribbon(aes(ymin = CI_95_L_OLS_CR3, ymax = CI_95_H_OLS_CR3), alpha = 0.1) +
+    # CTATE
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_est_OLS)), colour="#F8766D", linewidth=1) +
+     # CTATE CI L
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS_CR3), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_L_OLS_CR3)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    # CTATE CI H
+    geom_segment(aes(x = 2, y = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS_CR3), xend = 6, yend = unique(filter(CTI.df, CTE!=1)$CTATE_CI_95_H_OLS_CR3)), colour="#F8766D", linetype = "dashed", linewidth=1) +
+    scale_y_continuous(name="CTE estimate", limits=c(-2, 2)) +
+    theme_bw() +
+    labs(x ="Calendar time (j)") +
+    theme(plot.title = element_text(size = 10)),
+  nrow=1
+  ),
+  ncol=1, rel_heights=c(0.1, 1)
+)
+independence.plots_CR3
+
 cowplot::plot_grid(
   exchangeable.plots + panel_border(color="black", size=0.5),
   independence.plots +panel_border(color="black", size=0.5),
-  ncol=1
+  independence.plots_CR2 +panel_border(color="black", size=0.5),
+  independence.plots_CR3 +panel_border(color="black", size=0.5),
+  ncol=2
 )
-# width: 600, height: 450
+# width: 1000, height: 500
 ```

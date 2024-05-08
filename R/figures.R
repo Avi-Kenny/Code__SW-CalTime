@@ -41,39 +41,80 @@ simresults.df_ME <- rbind(
 )
 simresults.df_ME$simresultlabel <- factor(simresults.df_ME$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
 colnames(simresults.df_ME)
-# Simulated OLS results
+# Simulated OLS results with model-based variance
 simresults.df_OLS <- rbind(
+  simresults.df %>% mutate(simresult=bias_est_OLS_pct, simresultlabel="Percent Bias (%)"),
+  simresults.df %>% mutate(simresult=precision_OLS, simresultlabel="Precision"),
+  simresults.df %>% mutate(simresult=CP_OLS, simresultlabel="CP"),
+  simresults.df %>% mutate(simresult=RMSE_OLS, simresultlabel="RMSE")
+)
+simresults.df_OLS$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
+# Simulated OLS results with cluster-robust variance CR2
+simresults.df_OLS_CR2 <- rbind(
+  simresults.df %>% mutate(simresult=bias_est_OLS_pct, simresultlabel="Percent Bias (%)"),
+  simresults.df %>% mutate(simresult=precision_OLS_CR2, simresultlabel="Precision"),
+  simresults.df %>% mutate(simresult=CP_OLS_CR2, simresultlabel="CP"),
+  simresults.df %>% mutate(simresult=RMSE_OLS, simresultlabel="RMSE")
+)
+simresults.df_OLS_CR2$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
+simresults.df_OLS_CR3 <- rbind(
   simresults.df %>% mutate(simresult=bias_est_OLS_pct, simresultlabel="Percent Bias (%)"),
   simresults.df %>% mutate(simresult=precision_OLS_CR3, simresultlabel="Precision"),
   simresults.df %>% mutate(simresult=CP_OLS_CR3, simresultlabel="CP"),
   simresults.df %>% mutate(simresult=RMSE_OLS, simresultlabel="RMSE")
 )
-simresults.df_OLS$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
+simresults.df_OLS_CR3$simresultlabel <- factor(simresults.df_OLS$simresultlabel, levels=c("Percent Bias (%)","Precision","CP","RMSE"))
 
-simresults.df2 <- rbind(
+simresults.df2_bias <- rbind(
   simresults.df_ME %>% mutate(corr = "Exchangeable"),
   simresults.df_OLS %>% mutate(corr = "Independence")
 )
-# plot facet barplot with exchangeable exchangeable working correlation
-ggplot(simresults.df_ME, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
-  geom_bar(stat="identity") +
-  facet_grid(simresultlabel~estimandlabel, scales = "free") +
-  theme_bw() +
-  labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Simulation Results") +
-  theme(legend.position = "none")
-# width: 550, height: 500
-# plot facet barplot with independence working correlation structure
-ggplot(simresults.df_OLS, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
-  geom_bar(stat="identity") +
-  facet_grid(simresultlabel~estimandlabel, scales = "free") +
-  theme_bw() +
-  labs(title="Analysis with an independence working correlation structure", x ="Estimators", y = "Simulation Results") +
-  theme(legend.position = "none")
-# width: 550, height: 500
+simresults.df2_inference <- rbind(
+  simresults.df_ME %>% mutate(corr = "Exchangeable"),
+  simresults.df_OLS %>% mutate(corr = "Independence (model)"),
+  simresults.df_OLS_CR2 %>% mutate(corr = "Independence (CR2)"),
+  simresults.df_OLS_CR3 %>% mutate(corr = "Independence (CR3)")
+)
+simresults.df2_inference$corr <- factor(simresults.df2_inference$corr, levels=c("Exchangeable", "Independence (model)", "Independence (CR2)", "Independence (CR3)"))
+
+# # plot facet barplot with exchangeable exchangeable working correlation
+# ggplot(simresults.df_ME, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
+#   geom_bar(stat="identity") +
+#   facet_grid(simresultlabel~estimandlabel, scales = "free") +
+#   theme_bw() +
+#   labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Simulation Results") +
+#   theme(legend.position = "none")
+# # width: 550, height: 500
+# # plot facet barplot with independence working correlation structure
+# ggplot(simresults.df_OLS, aes(x=Estimator, y=simresult, color=Estimator, fill=Estimator)) +
+#   geom_bar(stat="identity") +
+#   facet_grid(simresultlabel~estimandlabel, scales = "free") +
+#   theme_bw() +
+#   labs(title="Analysis with an independence working correlation structure", x ="Estimators", y = "Simulation Results") +
+#   theme(legend.position = "none")
+# # width: 550, height: 500
 
 # plot both together
+# plot percent bias results
 ggplot(
-  simresults.df2, 
+  simresults.df2_bias %>% filter(simresultlabel=="Percent Bias (%)"), 
+  aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
+) +
+  geom_bar(stat="identity", position=position_dodge()) +
+  labs(x ="Working Correlation Structure", y = "Simulation Results") +
+  # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
+  # ) +
+  # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
+  # ggpattern::scale_pattern_manual(values = c(Exchangeable = "stripe", Independence = "none")) +
+  # labs(x ="Estimators", y = "Simulation Results") +
+  facet_grid(.~estimandlabel, scales = "free") +
+  labs(y="Percent Bias (%)") + 
+  theme_bw() +
+  theme(legend.position = "bottom")
+# width: 650, height: 300
+
+ggplot(
+  simresults.df2_inference %>% filter(simresultlabel%in% c("Precision", "CP")), 
   aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
 ) +
   geom_bar(stat="identity", position=position_dodge()) +
@@ -85,7 +126,7 @@ ggplot(
   # labs(x ="Estimators", y = "Simulation Results") +
   facet_grid(simresultlabel~estimandlabel, scales = "free") +
   theme_bw() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 # width: 650, height: 500
 
 # plot appendix plot (Power & MCSE)
