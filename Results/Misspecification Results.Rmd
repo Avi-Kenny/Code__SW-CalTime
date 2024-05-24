@@ -217,7 +217,7 @@ ggplot(filter(ETATE_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) +
   facet_grid(timelabels ~ gammalabels) +
   scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
   theme_bw() +
-  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 475
 
 # plot for manuscript
@@ -232,7 +232,7 @@ ETATE_CTIweights.df %>%
   facet_grid(timelabels ~ gammalabels) +
   scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
   theme_bw() +
-  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+  labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 400
 ```
 
@@ -535,7 +535,7 @@ ggplot(filter(CTATE_ETIweights.df), aes(x=factor(ETI), y=ETIweights)) +
   facet_grid(timelabels ~ gammalabels) +
   scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
   theme_bw() +
-  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 475
 
 # plot for manuscript
@@ -549,7 +549,7 @@ CTATE_ETIweights.df %>%
   facet_grid(timelabels ~ gammalabels) +
   scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
   theme_bw() +
-  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+  labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 400
 ```
 
@@ -854,7 +854,7 @@ ggplot(IT_ETIweights.df, aes(x=factor(ETI), y=ETIweights)) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   facet_grid(timelabels ~ gammalabels) +
   theme_bw() +
-  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 475
 
 # plot for manuscript
@@ -867,7 +867,7 @@ IT_ETIweights.df %>%
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   facet_grid(timelabels ~ gammalabels) +
   theme_bw() +
-  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE weights")
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 400
 ```
 
@@ -1019,7 +1019,7 @@ ggplot(filter(IT_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   facet_grid(timelabels ~ gammalabels) +
   theme_bw() +
-  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 475
 
 # plot for manuscript
@@ -1032,7 +1032,7 @@ IT_CTIweights.df %>%
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   facet_grid(timelabels ~ gammalabels) +
   theme_bw() +
-  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE weights")
+  labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 400
 ```
 
