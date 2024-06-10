@@ -97,11 +97,15 @@ simresults.df2_inference$corr <- factor(simresults.df2_inference$corr, levels=c(
 # plot both together
 # plot percent bias results
 ggplot(
-  simresults.df2_bias %>% filter(simresultlabel=="Percent Bias (%)"), 
+  simresults.df2_bias %>% filter(simresultlabel=="Percent Bias (%)") %>% 
+    mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+    mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))), 
   aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
 ) +
   geom_bar(stat="identity", position=position_dodge()) +
-  labs(x ="Working Correlation Structure", y = "Simulation Results") +
+  labs(x ="Correlation Structure", y = "Simulation Results") +
+  scale_color_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_fill_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
   # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
   # ) +
   # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
@@ -114,11 +118,15 @@ ggplot(
 # width: 650, height: 300
 
 ggplot(
-  simresults.df2_inference %>% filter(simresultlabel%in% c("Precision", "CP")), 
+  simresults.df2_inference %>% filter(simresultlabel%in% c("Precision", "CP")) %>% 
+    mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+    mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))), 
   aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
 ) +
   geom_bar(stat="identity", position=position_dodge()) +
-  labs(x ="Working Correlation Structure", y = "Simulation Results") +
+  labs(x ="Correlation Structure", y = "Simulation Results") +
+  scale_color_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_fill_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
   # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
   # ) +
   # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
@@ -136,11 +144,16 @@ ggplot(simresults.df, aes(x=Estimator, y=Power_ME, color=Estimator, fill=Estimat
   facet_grid(~estimandlabel, scales = "free") +
   labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Power_ME") +
   theme(legend.position = "none")
-ggplot(simresults.df, aes(x=Estimator, y=monte_carlo_se_ME, color=Estimator, fill=Estimator)) +
+ggplot(simresults.df %>% 
+         mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+         mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))), 
+       aes(x=Estimator, y=monte_carlo_se_ME, color=Estimator, fill=Estimator)) +
   geom_bar(stat="identity") +
   theme_bw() +
   facet_grid(~estimandlabel, scales = "free") +
-  labs(title="Analysis with an exchangeable working correlation structure", x ="Estimators", y = "Monte Carlo SE") +
+  labs(x ="Estimators", y = "Monte Carlo SE") +
+  scale_color_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+  scale_fill_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
   theme(legend.position = "none")
 # width 550, height=200
 
@@ -179,7 +192,7 @@ CTE.df_OLS <- data.frame(
   time_effect = "CTE"
 )
 # set plot colors
-colors <- c("ETATE" = "#00BA38", "CTATE" = "#F8766D", "IT" = "#619CFF")
+colors <- c("IT" = "#619CFF", "ETATE" = "#00BA38", "CTATE" = "#F8766D")
 # plots
 ETEplot_ME <-  ggplot(ETE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkgreen", color="darkgreen") +
@@ -188,10 +201,10 @@ ETEplot_ME <-  ggplot(ETE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) +
   geom_line(aes(y = IT, color = "IT")) +
   geom_line(aes(y = ETATE, color = "ETATE")) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
-  scale_color_manual(values = colors) +
+  scale_color_manual(breaks = c("IT", "ETATE", "CTATE"), values = colors) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title="Exchangeable working correlation", x ="Exposure time (s)", y = "ETE")
+  labs(title="Exchangeable correlation", x ="Exposure time (s)", y = "ETE")
 CTEplot_ME <- ggplot(CTE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkred", color="darkred") +
   geom_line(color="darkred") +
@@ -199,9 +212,9 @@ CTEplot_ME <- ggplot(CTE.df_ME, aes(x=factor(time), y=effect_curve, group=1)) +
   geom_line(aes(y = IT, color = "IT")) +
   geom_line(aes(y = ETATE, color = "ETATE")) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
-  scale_color_manual(values = colors) +
+  scale_color_manual(breaks = c("IT", "ETATE", "CTATE"), values = colors) +
   theme_bw() +
-  labs(title="Exchangeable working correlation", x ="Calendar time (j)", y = "CTE")
+  labs(title="Exchangeable correlation", x ="Calendar time (j)", y = "CTE")
 ETEplot_OLS <-  ggplot(ETE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkgreen", color="darkgreen") +
   geom_line(color="darkgreen") +
@@ -209,10 +222,10 @@ ETEplot_OLS <-  ggplot(ETE.df_OLS, aes(x=factor(time), y=effect_curve, group=1))
   geom_line(aes(y = IT, color = "IT")) +
   geom_line(aes(y = ETATE, color = "ETATE")) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
-  scale_color_manual(values = colors) +
+  scale_color_manual(breaks = c("IT", "ETATE", "CTATE"), values = colors) +
   theme_bw() +
   theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title="Independence working correlation", x ="Exposure time (s)", y = NULL)
+  labs(title="Independence correlation", x ="Exposure time (s)", y = NULL)
 CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) + 
   geom_point(fill="darkred", color="darkred") +
   geom_line(color="darkred") +
@@ -220,9 +233,9 @@ CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) 
   geom_line(aes(y = IT, color = "IT")) +
   geom_line(aes(y = ETATE, color = "ETATE")) +
   geom_line(aes(y = CTATE, color = "CTATE")) +
-  scale_color_manual(values = colors) +
+  scale_color_manual(breaks = c("IT", "ETATE", "CTATE"), values = colors) +
   theme_bw() +
-  labs(title="Independence working correlation", x ="Calendar time (j)", y = NULL)
+  labs(title="Independence correlation", x ="Calendar time (j)", y = NULL)
 
 # cowplot altogether:
 # cowplot::plot_grid(
