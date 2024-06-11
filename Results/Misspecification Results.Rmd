@@ -202,21 +202,25 @@ for(gamma in c(0, 0.25, 0.5, 0.99)){
 ETATE_CTIweights.df <- as.data.frame(ETATE_CTIweights.df)
 ETATE_CTIweights.df %>% head()
 ETATE_CTIweights.df %>% str()
-ETATE_CTIweights.df$CTI <- as.factor(ETATE_CTIweights.df$CTI)
+# ETATE_CTIweights.df$CTI <- as.factor(ETATE_CTIweights.df$CTI)
 ETATE_CTIweights.df$timelabels <- paste0("J = ", ETATE_CTIweights.df$time)
 ETATE_CTIweights.df$timelabels <- factor(ETATE_CTIweights.df$timelabels , levels=paste0("J = ", unique(ETATE_CTIweights.df$time)))
 
 ETATE_CTIweights.df$gammalabels <- paste0("gamma = ", ETATE_CTIweights.df$gamma)
 
 # plot
-ggplot(filter(ETATE_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+ggplot(filter(ETATE_CTIweights.df), aes(x=CTI, y=CTIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_point(color="blue", fill="blue", size=1)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(ICC ~ time
-  facet_grid(timelabels ~ gammalabels) +
-  scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(2), by = 1), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(2), max(10), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 475
 
@@ -224,14 +228,18 @@ ggplot(filter(ETATE_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) +
 ETATE_CTIweights.df %>%
   filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
   filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
-  ggplot(aes(x=factor(CTI), y=CTIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  ggplot(aes(x=CTI, y=CTIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_point(color="blue", fill="blue", size=1.25)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(ICC ~ time
-  facet_grid(timelabels ~ gammalabels) +
-  scale_y_continuous(breaks = seq(min(0), max(2), by = 1)) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(2), by = 1), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(2), max(10), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 400
 ```
@@ -521,20 +529,24 @@ for(gamma in c(0, 0.25, 0.5, 0.99)){
 CTATE_ETIweights.df <- as.data.frame(CTATE_ETIweights.df)
 CTATE_ETIweights.df %>% head()
 CTATE_ETIweights.df %>% str()
-CTATE_ETIweights.df$ETI <- as.factor(CTATE_ETIweights.df$ETI)
+# CTATE_ETIweights.df$ETI <- as.factor(CTATE_ETIweights.df$ETI)
 CTATE_ETIweights.df$timelabels <- paste0("J = ", CTATE_ETIweights.df$time)
 CTATE_ETIweights.df$timelabels <- factor(CTATE_ETIweights.df$timelabels , levels=paste0("J = ", unique(CTATE_ETIweights.df$time)))
 
 CTATE_ETIweights.df$gammalabels <- paste0("gamma = ", CTATE_ETIweights.df$gamma)
 
 # plot
-ggplot(filter(CTATE_ETIweights.df), aes(x=factor(ETI), y=ETIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+ggplot(filter(CTATE_ETIweights.df), aes(x=ETI, y=ETIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_point(color="blue", fill="blue", size=1) +
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  facet_grid(timelabels ~ gammalabels) +
-  scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(1), max(9), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 475
 
@@ -542,13 +554,17 @@ ggplot(filter(CTATE_ETIweights.df), aes(x=factor(ETI), y=ETIweights)) +
 CTATE_ETIweights.df %>%
   filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
   filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
-  ggplot(aes(x=factor(ETI), y=ETIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  ggplot(aes(x=ETI, y=ETIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_point(color="blue", fill="blue", size=1.25) +
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  facet_grid(timelabels ~ gammalabels) +
-  scale_y_continuous(breaks = seq(min(0), max(4), by = 2)) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(1), max(9), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 400
 ```
@@ -841,19 +857,24 @@ for(gamma in c(0, 0.25, 0.5, 0.99)){
 IT_ETIweights.df <- as.data.frame(IT_ETIweights.df)
 IT_ETIweights.df %>% head()
 IT_ETIweights.df %>% str()
-IT_ETIweights.df$ETI <- as.factor(IT_ETIweights.df$ETI)
+# IT_ETIweights.df$ETI <- as.factor(IT_ETIweights.df$ETI)
 IT_ETIweights.df$timelabels <- paste0("J = ", IT_ETIweights.df$time)
 IT_ETIweights.df$timelabels <- factor(IT_ETIweights.df$timelabels , levels=paste0("J = ", unique(IT_ETIweights.df$time)))
 
 IT_ETIweights.df$gammalabels <- paste0("gamma = ", IT_ETIweights.df$gamma)
 
 # plot (for Appendix)
-ggplot(IT_ETIweights.df, aes(x=factor(ETI), y=ETIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+ggplot(IT_ETIweights.df, aes(x=ETI, y=ETIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_point(color="blue", fill="blue", size=1)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  facet_grid(timelabels ~ gammalabels) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(1), max(9), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 475
 
@@ -861,12 +882,17 @@ ggplot(IT_ETIweights.df, aes(x=factor(ETI), y=ETIweights)) +
 IT_ETIweights.df %>%
   filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
   filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
-  ggplot(aes(x=factor(ETI), y=ETIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  ggplot(aes(x=ETI, y=ETIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_point(color="blue", fill="blue", size=1.25)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
-  facet_grid(timelabels ~ gammalabels) +
+  # facet_grid(timelabels ~ gammalabels) +
+  facet_grid(time ~ gamma) +
+  scale_y_continuous(breaks = seq(min(0), max(4), by = 2), sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(1), max(9), by = 1), sec.axis = sec_axis(~ . , name = TeX("$\\gamma =$"), breaks = NULL, labels = NULL)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="constant immediate treatment effect (IT) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 400
 ```
@@ -1007,20 +1033,25 @@ for(gamma in c(0.25)){
 IT_CTIweights.df <- as.data.frame(IT_CTIweights.df)
 IT_CTIweights.df %>% head()
 IT_CTIweights.df %>% str()
-IT_CTIweights.df$CTI <- as.factor(IT_CTIweights.df$CTI)
+# IT_CTIweights.df$CTI <- as.factor(IT_CTIweights.df$CTI)
 IT_CTIweights.df$timelabels <- paste0("J = ", IT_CTIweights.df$time)
 IT_CTIweights.df$timelabels <- factor(IT_CTIweights.df$timelabels , levels=paste0("J = ", unique(IT_CTIweights.df$time)))
 
 IT_CTIweights.df$gammalabels <- paste0("gamma = ", IT_CTIweights.df$gamma)
 
 # plot
-ggplot(filter(IT_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) + 
-  geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+ggplot(filter(IT_CTIweights.df), aes(x=CTI, y=CTIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=3.75) +
+  geom_point(color="blue", fill="blue", size=1)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(timelabels ~ gammalabels) +
-  facet_grid(timelabels ~ .) +
+  # facet_grid(timelabels ~ .) +
+  facet_grid(time ~ .) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(2), max(10), by = 1)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 475
 
@@ -1028,13 +1059,18 @@ ggplot(filter(IT_CTIweights.df), aes(x=factor(CTI), y=CTIweights)) +
 IT_CTIweights.df %>%
   filter(timelabels %in% c("J = 4", "J = 6", "J = 8", "J = 10")) %>%
   # filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
-  ggplot(aes(x=factor(CTI), y=CTIweights)) + 
- geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  ggplot(aes(x=CTI, y=CTIweights)) + 
+  # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
+  geom_point(color="blue", fill="blue", size=1.75)+
   geom_hline(yintercept=1, linetype="dashed", color = "red") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(timelabels ~ gammalabels) +
-  facet_grid(timelabels ~ .) +
+  # facet_grid(timelabels ~ .) +
+  facet_grid(time ~ .) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = TeX("$J =$"), breaks = NULL, labels = NULL)) +
+  scale_x_continuous(breaks = seq(min(2), max(10), by = 1)) +
   theme_bw() +
+  theme(panel.grid.minor.x = element_blank()) +
   labs(title="constant immediate treatment effect (IT) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 400
 ```
