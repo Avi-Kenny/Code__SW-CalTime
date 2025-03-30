@@ -13,30 +13,65 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r generate 3 cluster data}
 IT <- 2
 ETI <- 1
-# CTI <- c(0, 0, 2, 3, -2)
 a1 <- 7
 a2 <- 6
 a3 <- 5
+# cluster1 <- data.frame(
+#   cluster="cluster 1",
+#   Time = c(0:4), 
+#   IT = a1 + c(0, IT, IT, IT, IT),
+#   # ETI = a1 + c(0, 0, 1, 2, 3)*ETI,
+#   ETI = a1 + c(0, 0, 4, 5, 4.5),
+#   # CTI = a1 + c(0, 0, 4, 5, 2)
+#   CTI = a1 + c(0, 0, 4, 5, 4.5)
+# )
 cluster1 <- data.frame(
   cluster="cluster 1",
-  Time = c(0:4), 
-  IT = a1 + c(0, IT, IT, IT, IT),
-  ETI = a1 + c(0,0,1,2,3)*ETI,
-  CTI = a1 + c(0, 0, 4, 5, 2)
+  Time = c(0, 1,1, 2,2, 3,3, 4), 
+  IT = a1 + c(0,0, IT,IT, IT,IT, IT,IT),
+  ETI = a1 + c(0, 0,0, 4,4, 5,5, 4.5),
+  CTI = a1 + c(0, 0,0, 4,4, 5,5, 4.5),
+  IT_ind = c(0,0, 1,1, 1,1, 1,1),
+  CTI_ind = c(0,0, 1,1, 2,2, 3,3),
+  ETI_ind = c(0,0, 1,1, 2,2, 3,3)
 )
+# cluster2 <- data.frame(
+#   cluster="cluster 2",
+#   Time = c(0:4), 
+#   IT = a2 + c(0, 0, IT, IT, IT),
+#   # ETI = a2 + c(0,0,0,1,2)*ETI,
+#   ETI = a2 + c(0, 0, 0, 4, 5),
+#   # CTI = a2 + c(0, 0, 0, 1, -2)
+#   CTI = a2 + c(0, 0, 0, 1, 0.5)
+# )
 cluster2 <- data.frame(
   cluster="cluster 2",
-  Time = c(0:4), 
-  IT = a2 + c(0, 0, IT, IT, IT),
-  ETI = a2 + c(0,0,0,1,2)*ETI,
-  CTI = a2 + c(0, 0, 0, 1, -2)
+  Time = c(0, 1,1, 2,2, 3,3, 4), 
+  IT = a2 + c(0,0, 0,0, IT,IT, IT,IT),
+  ETI = a2 + c(0, 0,0, 0,0, 4,4, 5),
+  CTI = a2 + c(0, 0,0, 0,0, 1,1, 0.5),
+  IT_ind = c(0,0, 0,0, 1,1, 1,1),
+  CTI_ind = c(0,0, 0,0, 2,2, 3,3),
+  ETI_ind = c(0,0, 0,0, 1,1, 2,2)
 )
+# cluster3 <- data.frame(
+#   cluster="cluster 3",
+#   Time = c(0:4), 
+#   IT = a3 + c(0, 0, 0, IT, IT),
+#   # ETI = a3 + c(0,0,0,0,1)*ETI,
+#   ETI = a3 + c(0, 0, 0, 0, 4),
+#   # CTI = a3 + c(0, 0, 0, 0, -3)
+#   CTI = a3 + c(0, 0, 0, 0, -0.5)
+# )
 cluster3 <- data.frame(
   cluster="cluster 3",
-  Time = c(0:4), 
-  IT = a3 + c(0, 0, 0, IT, IT),
-  ETI = a3 + c(0,0,0,0,1)*ETI,
-  CTI = a3 + c(0, 0, 0, 0, -3)
+  Time = c(0, 1,1, 2,2, 3,3, 4), 
+  IT = a3 + c(0,0, 0,0, 0,0, IT,IT),
+  ETI = a3 + c(0, 0,0, 0,0, 0,0, 4),
+  CTI = a3 + c(0, 0,0, 0,0, 0,0, -0.5),
+  IT_ind = c(0,0, 0,0, 0,0, 1,1),
+  CTI_ind = c(0,0, 0,0, 0,0, 3,3),
+  ETI_ind = c(0,0, 0,0, 0,0, 1,1)
 )
 cluster1
 cluster2
@@ -50,34 +85,71 @@ library(dplyr)
 library(ggplot2)
 library(cowplot)
 
-ex.df
+ex.df$IT_ind <- as.factor(ex.df$IT_ind)
+ex.df$ETI_ind <- as.factor(ex.df$ETI_ind)
+ex.df$CTI_ind <- as.factor(ex.df$CTI_ind)
 
 cowplot::plot_grid(
-  ggplot(ex.df, aes(x = Time, y = IT, color = cluster)) +
-    geom_step() +
+  ggplot(ex.df, aes(x = Time, y = IT, color = cluster, linetype = IT_ind)) +
+    geom_line() +
+    geom_segment(x=1, y=a1, xend=1, yend=a1+IT) +
+    geom_segment(x=2, y=a2, xend=2, yend=a2+IT) +
+    geom_segment(x=3, y=a3, xend=3, yend=a3+IT) +
+    scale_linetype_manual(values = c("0"="solid", "1"="dashed")) +
     scale_colour_manual(values=rep("black", 3)) +
     scale_y_continuous(name="Outcome", limits=c(1, 12)) +
     ggtitle("IT") +
     theme_bw() +
-    theme(legend.position = "none"),
-  ggplot(ex.df, aes(x = Time, y = ETI, color = cluster)) +
+    guides(color = "none") +  
+    labs(x = "Period", linetype = "IT") +
+    theme(
+      legend.position = "bottom", 
+      legend.key.height = unit(0.2375, "in"), 
+      legend.margin = margin(-8, 0, 0, 0),
+      legend.text = element_text(size = 7), 
+      legend.title = element_text(size = 8) 
+    ),
+  ggplot(ex.df, aes(x = Time, y = ETI, color = cluster, linetype = ETI_ind)) +
+    # geom_line(linetype = "solid") +
     geom_line() +
+    scale_linetype_manual(values = c("0"="solid", "1"="dashed", "2"="dotdash", "3"="dotted")) +
     scale_colour_manual(values=rep("black", 3)) +
     scale_y_continuous(name="Outcome", limits=c(1, 12)) +
     ggtitle("ETE") +
     theme_bw() +
-    theme(legend.position = "none"),
-  ggplot(ex.df, aes(x = Time, y = CTI, color = cluster)) +
+    guides(color = "none", linetype = guide_legend(nrow = 2, byrow = TRUE)) +  
+    labs(x = "Period", linetype = "ETE") +
+    theme(
+      legend.position = "bottom", 
+      legend.key.height = unit(0.01, "in"), 
+      legend.margin = margin(-8, 0, 0, 0),
+      legend.text = element_text(size = 7), 
+      legend.title = element_text(size = 8) 
+    ),
+  ggplot(ex.df, aes(x = Time, y = CTI, color = cluster, linetype = CTI_ind)) +
     geom_line() +
+    scale_linetype_manual(values = c("0"="solid", "1"="dashed", "2"="dotdash", "3"="dotted")) +
     scale_colour_manual(values=rep("black", 3)) +
     scale_y_continuous(name="Outcome", limits=c(1, 12)) +
     ggtitle("CTE") +
     theme_bw() +
-    theme(legend.position = "none"),
+    guides(color = "none", linetype = guide_legend(nrow = 2, byrow = TRUE)) +  
+    labs(x = "Period", linetype = "CTE") +
+    theme(
+      legend.position = "bottom", 
+      legend.key.height = unit(0.01, "in"), 
+      legend.margin = margin(-8, 0, 0, 0),
+      legend.text = element_text(size = 7), 
+      legend.title = element_text(size = 8) 
+    ),
   nrow=1
 )
 # width: 550, height: 250
-
-# Exclude for now
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_2.tiff", plot = last_plot(),
+       width=6, height=2.5, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_2.png", plot = last_plot(),
+       width=6, height=2.5, units="in",
+       dpi=300, device='png')
 ```
 
