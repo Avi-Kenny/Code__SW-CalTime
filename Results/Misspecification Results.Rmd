@@ -179,7 +179,7 @@ f_ETATE_CTIweights(f_ETATE_SW_weights(sigma2_w=0.2, tau2=0.1, J=10, I=9, m=10)) 
 
 ```
 
-```{r * Generate ETATE -> CTATE figures}
+```{r ** Generate ETATE -> CTATE figures}
 # generate df
 ETATE_CTIweights.df <- c()
 
@@ -230,8 +230,8 @@ ETATE_CTIweights.df %>%
   filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
   ggplot(aes(x=CTI, y=CTIweights)) + 
   # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
-  geom_point(color="blue", fill="blue", size=1.25)+
-  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_point(color="black", fill="black", size=1.25)+
+  geom_hline(yintercept=1, linetype="dashed", color = "gray50") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(ICC ~ time
   # facet_grid(timelabels ~ gammalabels) +
@@ -242,9 +242,18 @@ ETATE_CTIweights.df %>%
   theme(panel.grid.minor.x = element_blank()) +
   labs(title="exposure time-averaged treatment effect (ETATE) as a \nweighted sum of calendar time effect (CTE) estimands", x ="CTE", y = "CTE scaled weights")
 # width 500, height 400
+# ggsave(filename = "ETATE_CTIweights.tiff", plot = last_plot(),
+#        width=5, height=4, units="in",
+#        dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_5.tiff", plot = last_plot(),
+       width=5, height=4, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_5.png", plot = last_plot(),
+       width=5, height=4, units="in",
+       dpi=300, device='png')
 ```
 
-```{r * Generate calendar time effects scenario}
+```{r ** Generate calendar time effects scenario}
 gamma <- 0.99
 s2w <- 1
 K <- 100
@@ -267,14 +276,14 @@ CTEtestscenario0 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect0,
   CTE_weight = sum(CTE_effect0 * ETATE_CTE_weights)/8,
-  scenario = "A",
+  scenario = "i.",
   CTATE = mean(CTE_effect0)
 )
 CTEtestscenario1 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect1,
   CTE_weight = sum(CTE_effect1 * ETATE_CTE_weights)/8,
-  scenario = "B",
+  scenario = "ii.",
   CTATE = mean(CTE_effect1)
 )
 # CTEtestscenario2 <- data.frame(
@@ -288,21 +297,21 @@ CTEtestscenario3 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect3,
   CTE_weight = sum(CTE_effect3 * ETATE_CTE_weights)/8,
-  scenario="C",
+  scenario="iii.",
   CTATE = mean(CTE_effect3)
 )
 CTEtestscenario4 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect4,
   CTE_weight = sum(CTE_effect4 * ETATE_CTE_weights)/8,
-  scenario="D",
+  scenario="iv.",
   CTATE = mean(CTE_effect4)
 )
 CTEtestscenario5 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect5,
   CTE_weight = sum(CTE_effect5 * ETATE_CTE_weights)/8,
-  scenario="E",
+  scenario="v.",
   CTATE = mean(CTE_effect5)
 )
 # CTEtestscenario6 <- data.frame(
@@ -396,11 +405,11 @@ f_CTATE(sigma2_w=1, tau2=0.5, J=4, I=3, m=1)
 (sigma2_w/m + tau2)*(9)*(1/((gamma+2)*(3*gamma+2)))*(1-gamma)*(1+2*gamma) * (2/3)*(1+gamma)
 (sigma2_w/m + tau2)*(9)*(1/((gamma+2)*(3*gamma+2)))*(1-gamma)*(1+2*gamma) * (1/3)*gamma
 
-solve(crossmat)
-- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(1+gamma)*(1-gamma)*(1+2*gamma)
-- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(gamma)*(1-gamma)*(1+2*gamma)
-- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * gamma*(1-gamma)*(1+2*gamma)
-- (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (4)*(1+gamma)*(1-gamma)*(1+2*gamma)
+# solve(crossmat)
+# - (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(1+gamma)*(1-gamma)*(1+2*gamma)
+# - (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (2)*(gamma)*(1-gamma)*(1+2*gamma)
+# - (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * gamma*(1-gamma)*(1+2*gamma)
+# - (sigma2_w/m + tau2)*(1/((gamma+2)*(3*gamma+2))) * (4)*(1+gamma)*(1-gamma)*(1+2*gamma)
 ```
 
 ```{r * generate CTATE weights function}
@@ -506,7 +515,7 @@ f_CTATE_ETIweights(f_CTATE_SW_weights(sigma2_w=2, tau2=0.5, J=6, I=5, m=100))
 # results are correct
 ```
 
-```{r Generate CTATE -> ETATE figures}
+```{r ** Generate CTATE -> ETATE figures}
 # generate df
 CTATE_ETIweights.df <- c()
 
@@ -556,8 +565,8 @@ CTATE_ETIweights.df %>%
   filter(gammalabels %in% c("gamma = 0", "gamma = 0.5", "gamma = 0.99")) %>%
   ggplot(aes(x=ETI, y=ETIweights)) + 
   # geom_dotplot(binaxis='y', stackdir='center', color="blue", fill="blue", dotsize=2.5) +
-  geom_point(color="blue", fill="blue", size=1.25) +
-  geom_hline(yintercept=1, linetype="dashed", color = "red") +
+  geom_point(color="black", fill="black", size=1.25) +
+  geom_hline(yintercept=1, linetype="dashed", color = "gray50") +
   geom_hline(yintercept=0, linetype="dashed", color = "black") +
   # facet_grid(timelabels ~ gammalabels) +
   facet_grid(time ~ gamma) +
@@ -567,9 +576,18 @@ CTATE_ETIweights.df %>%
   theme(panel.grid.minor.x = element_blank()) +
   labs(title="calendar time-averaged treatment effect (CTATE) as a \nweighted sum of exposure time effect (ETE) estimands", x ="ETE", y = "ETE scaled weights")
 # width 500, height 400
+# ggsave(filename = "CTATE_ETIweights.tiff", plot = last_plot(),
+#        width=5, height=4, units="in",
+#        dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_7.tiff", plot = last_plot(),
+       width=5, height=4, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_7.png", plot = last_plot(),
+       width=5, height=4, units="in",
+       dpi=300, device='png')
 ```
 
-```{r * Generate exposure time effects scenario}
+```{r ** Generate exposure time effects scenario}
 library(ggplot2)
 
 gamma <- 0.99
@@ -596,20 +614,20 @@ sum(ETE_effect1 * CTATE_ETE_weights)
 sum(ETE_effect2 * CTATE_ETE_weights)
 sum(ETE_effect4 * CTATE_ETE_weights)
 sum(ETE_effect5 * CTATE_ETE_weights)
-sum(ETE_effect6 * CTATE_ETE_weights)
+# sum(ETE_effect6 * CTATE_ETE_weights)
 
 ETEtestscenario0 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect0,
   ETE_weight = sum(ETE_effect0 * CTATE_ETE_weights)/8,
-  scenario = "A",
+  scenario = "i.",
   ETATE = mean(ETE_effect0)
 )
 ETEtestscenario1 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect1,
   ETE_weight = sum(ETE_effect1 * CTATE_ETE_weights)/8,
-  scenario = "B",
+  scenario = "ii.",
   ETATE = mean(ETE_effect1)
 )
 # ETEtestscenario2 <- data.frame(
@@ -623,21 +641,21 @@ ETEtestscenario3 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect3,
   ETE_weight = sum(ETE_effect3 * CTATE_ETE_weights)/8,
-  scenario="C",
+  scenario="iii.",
   ETATE = mean(ETE_effect3)
 )
 ETEtestscenario4 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect4,
   ETE_weight = sum(ETE_effect4 * CTATE_ETE_weights)/8,
-  scenario="D",
+  scenario="iv.",
   ETATE = mean(ETE_effect4)
 )
 ETEtestscenario5 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8),
   ETE_effect = ETE_effect5,
   ETE_weight = sum(ETE_effect5 * CTATE_ETE_weights)/8,
-  scenario="E",
+  scenario="v.",
   ETATE = mean(ETE_effect5)
 )
 # ETEtestscenario6 <- data.frame(
@@ -837,7 +855,7 @@ f_IT_ETIweights <- function(ITweights){
 }
 ```
 
-```{r * Generate IT -> ETI figures}
+```{r ** Generate IT -> ETI figures}
 library(dplyr)
 
 # generate df
@@ -897,7 +915,7 @@ IT_ETIweights.df %>%
 # width 500, height 400
 ```
 
-```{r * Generate IT exposure time effects scenario}
+```{r ** Generate IT exposure time effects scenario}
 gamma <- 0.99
 s2w <- 1
 K <- 100
@@ -919,7 +937,7 @@ ETE_effect2 <- c(0, 0, 0.01, 0.02, 0.05, 0.1, 0.50, 1)
 ETE_effect2 <- c(0, ETE_effect2)
 # ETE_effect3 <- seq(0,1,length.out=8)
 ETE_effect3 <- seq(0,1,length.out=9)
-# ETE_effect4 <- c(0, 0, 0, 0, 0, 1, 1, 1)
+ETE_effect4 <- c(0, 0, 0, 0, 0, 1, 1, 1)
 ETE_effect4 <- c(ETE_effect4, 1)
 # ETE_effect5 <- c(0, 0.9, 0.97, 1, 1, 0.97, 0.9, 0)
 ETE_effect5 <- c(0, 0.9, 0.97, 1, 1, 1, 0.97, 0.9, 0)
@@ -931,20 +949,20 @@ sum(ETE_effect1 * IT_ETE_weights)
 sum(ETE_effect2 * IT_ETE_weights)
 sum(ETE_effect4 * IT_ETE_weights)
 sum(ETE_effect5 * IT_ETE_weights)
-sum(ETE_effect6 * IT_ETE_weights)
+# sum(ETE_effect6 * IT_ETE_weights)
 
 ETEtestscenario0 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect0,
   ETE_weight = sum(ETE_effect0 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario = "A",
+  scenario = "i.",
   ETATE = mean(ETE_effect0)
 )
 ETEtestscenario1 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect1,
   ETE_weight = sum(ETE_effect1 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario = "B",
+  scenario = "ii.",
   ETATE = mean(ETE_effect1)
 )
 # ETEtestscenario2 <- data.frame(
@@ -958,21 +976,21 @@ ETEtestscenario3 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect3,
   ETE_weight = sum(ETE_effect3 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="C",
+  scenario="iii.",
   ETATE = mean(ETE_effect3)
 )
 ETEtestscenario4 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect4,
   ETE_weight = sum(ETE_effect4 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="D",
+  scenario="iv.",
   ETATE = mean(ETE_effect4)
 )
 ETEtestscenario5 <- data.frame(
   ETE = c(1,2,3,4,5,6,7,8,9),
   ETE_effect = ETE_effect5,
   ETE_weight = sum(ETE_effect5 * IT_ETE_weights)/length(IT_ETE_weights),
-  scenario="E",
+  scenario="v.",
   ETATE = mean(ETE_effect5)
 )
 # ETEtestscenario6 <- data.frame(
@@ -1010,7 +1028,7 @@ ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) +
 # width 600, height 300
 ```
 
-```{r * Generate IT -> CTI figures}
+```{r ** Generate IT -> CTI figures}
 # generate df
 IT_CTIweights.df <- c()
 
@@ -1075,7 +1093,7 @@ IT_CTIweights.df %>%
 # width 500, height 400
 ```
 
-```{r * Generate IT calendar time effects scenario}
+```{r ** Generate IT calendar time effects scenario}
 gamma <- 0.99
 s2w <- 1
 K <- 100
@@ -1100,14 +1118,14 @@ CTEtestscenario0 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect0,
   CTE_weight = sum(CTE_effect0 * IT_CTE_weights)/8,
-  scenario = "A",
+  scenario = "i.",
   CTATE = mean(CTE_effect0)
 )
 CTEtestscenario1 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect1,
   CTE_weight = sum(CTE_effect1 * IT_CTE_weights)/8,
-  scenario = "B",
+  scenario = "ii.",
   CTATE = mean(CTE_effect1)
 )
 # CTEtestscenario2 <- data.frame(
@@ -1121,21 +1139,21 @@ CTEtestscenario3 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect3,
   CTE_weight = sum(CTE_effect3 * IT_CTE_weights)/8,
-  scenario="C",
+  scenario="iii.",
   CTATE = mean(CTE_effect3)
 )
 CTEtestscenario4 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect4,
   CTE_weight = sum(CTE_effect4 * IT_CTE_weights)/8,
-  scenario="D",
+  scenario="iv.",
   CTATE = mean(CTE_effect4)
 )
 CTEtestscenario5 <- data.frame(
   CTE = c(2,3,4,5,6,7,8,9),
   CTE_effect = CTE_effect5,
   CTE_weight = sum(CTE_effect5 * IT_CTE_weights)/8,
-  scenario="E",
+  scenario="v.",
   CTATE = mean(CTE_effect5)
 )
 # CTEtestscenario6 <- data.frame(
@@ -1193,5 +1211,209 @@ ggplot(aes(x=factor(CTE), y=CTE_effect, group=1)) +
   labs(x ="Calendar time (j)", y = "CTE value")
 
 # width 400, height 275
+```
+
+# Combined Figure
+```{r ** Combine scenario figures}
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+# colors <- c("CTE" = "darkred", "True CTATE"="#F8766D", "Est. ETATE" = "#00BA38")
+linetype1 <- c("True CTATE"="solid", "Est. ETATE" = "dashed")
+linetype2 <- c("True ETATE" = "solid", "Est. CTATE"="dashed")
+linetype3 <- c("True ETATE" = "solid", "Est. IT"="dashed")
+linetype4 <- c("True CTATE"="solid", "Est. IT" = "dashed")
+
+cowplot::plot_grid(
+    ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+    # geom_point(aes(color="ETE"), fill="darkgreen") +
+    # geom_line(aes(color="ETE")) +
+    geom_point(color="gray70", fill="gray70") +
+    geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+    geom_hline(yintercept=0, linetype="dotted", color = "black") +
+    # geom_hline(aes(yintercept=ETE_weight, color = "Est. IT"), linetype="solid", lwd=0.75) +
+    # geom_hline(aes(yintercept=ETATE, color = "True ETATE"), linetype="solid", lwd=0.75) +
+    geom_hline(aes(yintercept=ETE_weight, linetype = "Est. IT"), color="black") +
+    geom_hline(aes(yintercept=ETATE, linetype = "True ETATE"), color="black") +
+    theme_bw() +
+    facet_grid(~ scenario) +
+    labs(title="Scenarios with different ETE as analyzed by an IT estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+    # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+    scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+    # scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. IT")) + 
+    scale_linetype_manual(values = linetype3, breaks = c("True ETATE", "Est. IT")) + 
+    theme(legend.position="right", legend.title=element_blank())
+  ,
+  ggplot(IT_CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+    # geom_point(aes(color="CTE"), fill="darkred") +
+    # geom_line(aes(color="CTE")) +
+    geom_point(color="gray70", fill="gray70") +
+    geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+    geom_hline(yintercept=0, linetype="dotted", color = "black") +
+    # geom_hline(aes(yintercept=CTE_weight, color="Est. IT"), linetype="solid", lwd=0.75) +
+    # geom_hline(aes(yintercept=CTATE, color="True CTATE"), linetype="solid", lwd=0.75) +
+    geom_hline(aes(yintercept=CTE_weight, linetype="Est. IT"), color="black") +
+    geom_hline(aes(yintercept=CTATE, linetype="True CTATE"), color="black") +
+    theme_bw() +
+    facet_grid(~ scenario) +
+    labs(title="Scenarios with different CTE as analyzed by an IT estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+    # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+    scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+    # scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. IT")) +
+    scale_linetype_manual(values = linetype4, breaks = c("True CTATE", "Est. IT")) +
+    theme(legend.position="right", legend.title=element_blank())
+  ,
+  ggplot(CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+    # geom_point(aes(color="CTE"),fill="black") +
+    # geom_line(aes(linetype = "CTE"), color="gray50", lwd=0.90) +
+    geom_point(color="gray70", fill="gray70") +
+    geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+    geom_hline(yintercept=0, linetype="dotted", color = "black") +
+    geom_hline(aes(yintercept=CTE_weight, linetype="Est. ETATE"), color = "black") +
+    geom_hline(aes(yintercept=CTATE, linetype="True CTATE"), color = "black") +
+    theme_bw() +
+    facet_grid(~ scenario) +
+    labs(title="Scenarios with different CTE as analyzed by an ETATE estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+    # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+    scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+    # scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. ETATE")) +
+    scale_linetype_manual(values = linetype1, breaks = c("True CTATE", "Est. ETATE")) +
+    theme(legend.position="right", legend.title=element_blank())
+  ,
+  ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+    # geom_point(aes(color="ETE"), fill="darkgreen") +
+    # geom_line(aes(color="ETE")) +
+    geom_point(color="gray70", fill="gray70") +
+    geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+    geom_hline(yintercept=0, linetype="dotted", color = "black") +
+    geom_hline(aes(yintercept=ETE_weight, linetype = "Est. CTATE"), color="black") +
+    geom_hline(aes(yintercept=ETATE, linetype = "True ETATE"), color="black") +
+    theme_bw() +
+    facet_grid(~ scenario) +
+    labs(title="Scenarios with different ETE as analyzed by a CTATE estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+    # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+    scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+    # scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. CTATE")) +
+    scale_linetype_manual(values = linetype2, breaks = c("True ETATE", "Est. CTATE")) +
+    theme(legend.position="right", legend.title=element_blank())
+  ,
+  nrow=4, labels=c("A.","B.","C.","D.")
+)
+# width = 660, height = 600
+# ggsave(filename = "Figure_Scenarios.tiff", plot = last_plot(),
+#        width=6.6, height=7, units="in",
+#        dpi=800, device='tiff')
+# ggsave(filename = "Figure_Scenarios.png", plot = last_plot(),
+#        width=6.6, height=7, units="in",
+#        dpi=300, device='png')
+
+```
+
+
+```{r ** Separate scenario figures}
+library(ggplot2)
+library(dplyr)
+library(cowplot)
+# colors <- c("CTE" = "darkred", "True CTATE"="#F8766D", "Est. ETATE" = "#00BA38")
+linetype1 <- c("True CTATE"="solid", "Est. ETATE" = "dashed")
+linetype2 <- c("True ETATE" = "solid", "Est. CTATE"="dashed")
+linetype3 <- c("True ETATE" = "solid", "Est. IT"="dashed")
+linetype4 <- c("True CTATE"="solid", "Est. IT" = "dashed")
+
+ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+  # geom_point(aes(color="ETE"), fill="darkgreen") +
+  # geom_line(aes(color="ETE")) +
+  geom_point(color="gray70", fill="gray70") +
+  geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+  geom_hline(yintercept=0, linetype="dotted", color = "black") +
+  # geom_hline(aes(yintercept=ETE_weight, color = "Est. IT"), linetype="solid", lwd=0.75) +
+  # geom_hline(aes(yintercept=ETATE, color = "True ETATE"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=ETE_weight, linetype = "Est. IT"), color="black") +
+  geom_hline(aes(yintercept=ETATE, linetype = "True ETATE"), color="black") +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different ETE as analyzed by an IT estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+  # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+  # scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. IT")) + 
+  scale_linetype_manual(values = linetype3, breaks = c("True ETATE", "Est. IT")) + 
+  theme(legend.position="right", legend.title=element_blank())
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_3.tiff", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_3.png", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=300, device='png')
+
+ggplot(IT_CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+  # geom_point(aes(color="CTE"), fill="darkred") +
+  # geom_line(aes(color="CTE")) +
+  geom_point(color="gray70", fill="gray70") +
+  geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+  geom_hline(yintercept=0, linetype="dotted", color = "black") +
+  # geom_hline(aes(yintercept=CTE_weight, color="Est. IT"), linetype="solid", lwd=0.75) +
+  # geom_hline(aes(yintercept=CTATE, color="True CTATE"), linetype="solid", lwd=0.75) +
+  geom_hline(aes(yintercept=CTE_weight, linetype="Est. IT"), color="black") +
+  geom_hline(aes(yintercept=CTATE, linetype="True CTATE"), color="black") +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different CTE as analyzed by an IT estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+  # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+  # scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. IT")) +
+  scale_linetype_manual(values = linetype4, breaks = c("True CTATE", "Est. IT")) +
+  theme(legend.position="right", legend.title=element_blank())
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_4.tiff", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_4.png", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=300, device='png')
+
+ggplot(CTEtestscenario, aes(x=factor(CTE), y=CTE_effect, group=1)) + 
+  # geom_point(aes(color="CTE"),fill="black") +
+  # geom_line(aes(linetype = "CTE"), color="gray50", lwd=0.90) +
+  geom_point(color="gray70", fill="gray70") +
+  geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+  geom_hline(yintercept=0, linetype="dotted", color = "black") +
+  geom_hline(aes(yintercept=CTE_weight, linetype="Est. ETATE"), color = "black") +
+  geom_hline(aes(yintercept=CTATE, linetype="True CTATE"), color = "black") +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different CTE as analyzed by an ETATE estimator", x ="Calendar time (j)", y = "CTE value", color=NULL) +
+  # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+  # scale_color_manual(values = colors, breaks = c("CTE", "True CTATE", "Est. ETATE")) +
+  scale_linetype_manual(values = linetype1, breaks = c("True CTATE", "Est. ETATE")) +
+  theme(legend.position="right", legend.title=element_blank())
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_6.tiff", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_6.png", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=300, device='png')
+
+ggplot(ETEtestscenario, aes(x=factor(ETE), y=ETE_effect, group=1)) + 
+  # geom_point(aes(color="ETE"), fill="darkgreen") +
+  # geom_line(aes(color="ETE")) +
+  geom_point(color="gray70", fill="gray70") +
+  geom_line(linetype = "solid", color="gray70", lwd=0.75) +
+  geom_hline(yintercept=0, linetype="dotted", color = "black") +
+  geom_hline(aes(yintercept=ETE_weight, linetype = "Est. CTATE"), color="black") +
+  geom_hline(aes(yintercept=ETATE, linetype = "True ETATE"), color="black") +
+  theme_bw() +
+  facet_grid(~ scenario) +
+  labs(title="Scenarios with different ETE as analyzed by a CTATE estimator", x ="Exposure time (s)", y = "ETE value", color=NULL) +
+  # scale_y_continuous(breaks=c(0,0.25,0.5,0.75,1)) +
+  scale_y_continuous(breaks=c(0,0.5,1), limits= c(-0.4, 1.4)) +
+  # scale_color_manual(values = colors, breaks = c("ETE", "True ETATE", "Est. CTATE")) +
+  scale_linetype_manual(values = linetype2, breaks = c("True ETATE", "Est. CTATE")) +
+  theme(legend.position="right", legend.title=element_blank())
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_8.tiff", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=800, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_8.png", plot = last_plot(),
+       width=6.6, height=2.5, units="in",
+       dpi=300, device='png')
 ```
 

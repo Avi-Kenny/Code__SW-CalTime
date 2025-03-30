@@ -137,6 +137,77 @@ ggplot(
   theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 # width: 650, height: 500
 
+# [bw] plot
+# ggplot(
+#   simresults.df2_inference %>% filter(simresultlabel%in% c("Percent Bias (%)","Precision", "CP")) %>% 
+#     mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+#     mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))), 
+#   aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
+# ) +
+#   geom_bar(stat="identity", position=position_dodge(), color="black") +
+#   labs(x ="Correlation Structure", y = "Simulation Results") +
+#   # scale_color_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+#   # scale_fill_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+#   scale_color_manual(values=c("black", "gray40", "gray80")) +
+#   scale_fill_manual(values=c("black", "gray40", "gray80")) +
+#   # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
+#   # ) +
+#   # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
+#   # ggpattern::scale_pattern_manual(values = c(Exchangeable = "stripe", Independence = "none")) +
+#   # labs(x ="Estimators", y = "Simulation Results") +
+#   facet_grid(simresultlabel~estimandlabel, scales = "free") +
+#   theme_bw() +
+#   theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+# # width: 650, height: 500
+# ggsave(filename = "sim_results.tiff", plot = last_plot(),
+#        width=6.5, height=5, units="in",
+#        dpi=800, device='tiff')
+cowplot::plot_grid(
+  ggplot(
+    simresults.df2_bias %>% filter(simresultlabel=="Percent Bias (%)") %>% 
+      mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+      mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))), 
+    aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
+  ) +
+    geom_bar(stat="identity", position=position_dodge(), color="black") +
+    labs(x ="Correlation Structure", y = "Simulation Results") +
+    scale_color_manual(values=c("black", "gray40", "gray80")) +
+    scale_fill_manual(values=c("black", "gray40", "gray80")) +
+    facet_grid(simresultlabel~estimandlabel, scales = "free") +
+    labs(y=NULL, x=NULL) + 
+    theme_bw() +
+    theme(legend.position = "none")
+  ,
+  ggplot(
+    simresults.df2_inference %>% filter(simresultlabel%in% c("Precision", "CP")) %>%
+      mutate(estimandlabel = factor(estimandlabel, levels=c("Estimand: IT", "Estimand: ETATE", "Estimand: CTATE"))) %>%
+      mutate(Estimator = factor(Estimator, levels=c("IT", "ETATE", "CTATE"))),
+    aes(x=corr, y=simresult,  fill=Estimator, color=Estimator)
+  ) +
+    geom_bar(stat="identity", position=position_dodge(), color="black") +
+    labs(x ="Correlation Structure", y = NULL) +
+    # scale_color_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+    # scale_fill_manual(values=c("#619CFF", "#00BA38", "#F8766D")) +
+    scale_color_manual(values=c("black", "gray40", "gray80")) +
+    scale_fill_manual(values=c("black", "gray40", "gray80")) +
+    # aes(x=estimator, y=simresult,  fill=estimator, pattern=corr)
+    # ) +
+    # ggpattern::geom_bar_pattern(stat="identity", position=position_dodge(), color="black", pattern_fill="black") +
+    # ggpattern::scale_pattern_manual(values = c(Exchangeable = "stripe", Independence = "none")) +
+    # labs(x ="Estimators", y = "Simulation Results") +
+    facet_grid(simresultlabel~estimandlabel, scales = "free") +
+    theme_bw() +
+    theme(legend.position = "bottom", axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+  ,
+  nrow=2, rel_heights = c(1, 2), labels = c('A.', 'B.')
+)
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_9.tiff", plot = last_plot(),
+       width=6.25, height=5, units="in",
+       dpi=600, device='tiff')
+ggsave(filename = "Kenneth_Menglin_Lee_Figure_9.png", plot = last_plot(),
+       width=6.25, height=5, units="in",
+       dpi=300, device='png')
+
 # plot appendix plot (Power & MCSE)
 ggplot(simresults.df, aes(x=Estimator, y=Power_ME, color=Estimator, fill=Estimator)) +
   geom_bar(stat="identity") +
@@ -238,28 +309,28 @@ CTEplot_OLS <- ggplot(CTE.df_OLS, aes(x=factor(time), y=effect_curve, group=1)) 
   labs(title="Independence correlation", x ="Calendar time (j)", y = NULL)
 
 # cowplot altogether:
-# cowplot::plot_grid(
-#   cowplot::plot_grid(
-#     cowplot::plot_grid(
-#       ETEplot_ME+theme(legend.position = "none") + ylim(-1.5, 6),
-#       CTEplot_ME+theme(legend.position = "none"),
-#       nrow=2,
-#       rel_heights=c(1,0.9)
-#     ),
-#     cowplot::plot_grid(
-#       ETEplot_OLS+theme(legend.position = "none") + ylim(-1.5, 6),
-#       CTEplot_OLS+theme(legend.position = "none"),
-#       nrow=2,
-#       rel_heights=c(1,0.9)
-#     ),
-#     ncol=2,
-#     rel_widths=c(1,0.95)
-#   ),
-#   cowplot::get_legend(ETEplot_ME+theme(legend.position = "bottom")+labs(colour="Analysis")),
-#   nrow=2,
-#   rel_heights=c(0.9, 0.1)
-# )
-# width: 500, height: 400
+cowplot::plot_grid(
+  cowplot::plot_grid(
+    cowplot::plot_grid(
+      ETEplot_ME+theme(legend.position = "none") + ylim(-1.5, 6),
+      CTEplot_ME+theme(legend.position = "none"),
+      nrow=2,
+      rel_heights=c(1,0.9), labels = c("A.", "B.")
+    ),
+    cowplot::plot_grid(
+      ETEplot_OLS+theme(legend.position = "none") + ylim(-1.5, 6),
+      CTEplot_OLS+theme(legend.position = "none"),
+      nrow=2,
+      rel_heights=c(1,0.9)
+    ),
+    ncol=2,
+    rel_widths=c(1,0.95)
+  ),
+  cowplot::get_legend(ETEplot_ME+theme(legend.position = "bottom")+labs(colour="Analysis")),
+  nrow=2,
+  rel_heights=c(0.9, 0.1)
+)
+# width: 500, height: 500
 
 # exposure time-varying plots
 cowplot::plot_grid(
